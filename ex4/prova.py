@@ -7,6 +7,11 @@ from numba.experimental import jitclass
 node_type = deferred_type()
 
 
+LEAF = 0
+VALUE = 1
+EVENT = 2
+
+
 @jitclass()
 class Node:
     type: int  # 0 = leaf, 1 = value, 2 = event
@@ -17,9 +22,14 @@ class Node:
     true_child: optional(node_type)
     false_child: optional(node_type)
 
-    def __init__(self):
+    def __init__(self, type=LEAF, y=None, v=None, l=None, d=None):
         self.true_child = None
         self.false_child = None
+        self.type = type
+        self.y = y
+        self.v = v
+        self.l = l
+        self.d = d
 
 
 node_type.define(Node.class_type.instance_type)

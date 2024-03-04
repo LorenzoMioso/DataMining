@@ -1,9 +1,11 @@
+import functools
 import math
+from collections import OrderedDict
 
+import numba as nb
 import numpy as np
-from numba import deferred_type, float64, int8, int32, jit, typed, types
+from numba import deferred_type, float32, float64, int8, jit, njit, optional, types
 from numba.experimental import jitclass
-from numba.typed import List
 from util import parse_dataset
 
 DATASET_PATH = "../datasets/activity.txt"
@@ -11,78 +13,58 @@ DATASET_PATH = "../datasets/activity.txt"
 # DATASET_PATH = "../datasets/gene.txt"
 
 
-# TODO make the tree a class
+LEAF = 0
+VALUE = 1
+EVENT = 2
 
-spec_event_node = [
-    ("l", types.unicode_type),
-    ("d", int32),
-    ("true_child", types.Optional(types.pyobject)),
-    ("false_child", types.Optional(types.pyobject)),
-]
-
-spec_value_node = [
-    ("v", types.Optional(float64)),
-    ("true_child", types.Optional(types.pyobject)),
-    ("false_child", types.Optional(types.pyobject)),
-]
-
-spec_leaf = [
-    ("y", int8),
+node_type = deferred_type()
+spec = [
+    ("type", int8),
+    ("y", optional(int8)),
+    ("v", optional(float32)),
+    ("l", optional(types.unicode_type)),
+    ("d", optional(float32)),
+    ("true_child", optional(node_type)),
+    ("false_child", optional(node_type)),
 ]
 
 
-@jitclass(spec_leaf)
-class Leaf:
-    def __init__(self, y):
+@jitclass(spec)
+class Node:
+    def __init__(self, type=LEAF, y=None, v=None, l=None, d=None):
+        self.true_child = None
+        self.false_child = None
+        self.type = type
         self.y = y
-
-    def __repr__(self):
-        return f"Leaf({self.y})"
-
-
-@jitclass(spec_value_node)
-class ValueNode:
-    def __init__(self, v=None, true_child=None, false_child=None):
         self.v = v
-        self.true_child = true_child
-        self.false_child = false_child
-
-    def __repr__(self):
-        return f"ValueNode({self.v})"
-
-
-@jitclass(spec_event_node)
-class EventNode:
-    def __init__(self, l, d, true_child=None, false_child=None):
         self.l = l
         self.d = d
-        self.true_child = true_child
-        self.false_child = false_child
-
-    def __repr__(self):
-        return f"EventNode({self.l}, {self.d})"
 
 
-def print_tree(root, indent=0, prefix=""):
-    if isinstance(root, EventNode):
-        print("  " * indent + f"EventNode('{root.l}', {root.d})")
-        if root.true_child:
-            print_tree(root.true_child, indent + 1, "T")
-        if root.false_child:
-            print_tree(root.false_child, indent + 1, "F")
-    elif isinstance(root, ValueNode):
-        print("  " * indent + f"-{prefix}: ValueNode({root.v})")
-        if root.true_child:
-            print_tree(root.true_child, indent + 1, "T")
-        if root.false_child:
-            print_tree(root.false_child, indent + 1, "F")
-    elif isinstance(root, Leaf):
-        print("  " * indent + f"-{prefix}: Leaf({root.y})")
+node_type.define(Node.class_type.instance_type)
+
+
+@njit
+def print_tree(node: Node, indent=0, prefix=""):
+    if node.type == EVENT:
+        print("  " * indent + f"EventNode('{node.l}', {node.d})")
+        if node.true_child:
+            print_tree(node.true_child, indent + 1, "T")
+        if node.false_child:
+            print_tree(node.false_child, indent + 1, "F")
+    elif node.type == VALUE:
+        print("  " * indent + f"-{prefix}: ValueNode({node.v})")
+        if node.true_child:
+            print_tree(node.true_child, indent + 1, "T")
+        if node.false_child:
+            print_tree(node.false_child, indent + 1, "F")
+    elif node.type == LEAF:
+        print("  " * indent + f"-{prefix}: Leaf({node.y})")
     else:
-        raise ValueError(f"Unknown type {type(root)}")
+        raise ValueError(f"Unknown type {type(node)}")
 
 
-@jit(nopython=True)
+@njit
 def exist_event(s, vt, l, d):
     # print(f"call to exist_event with s = {s}, vt = {vt}, l = {l}, d = {d}")
     # implements ∃i(s[i].l = l, s[i].vt - vt <= d)
@@ -92,7 +74,7 @@ def exist_event(s, vt, l, d):
     return False
 
 
-@jit(nopython=True)
+@njit
 def min_label_index(s, l):
     # implements min{i | s[i].l = l}
     for i, si in enumerate(s):
@@ -101,7 +83,7 @@ def min_label_index(s, l):
     return None
 
 
-@jit(nopython=True)
+@njit
 def best_class_by_value_true_child(
     W,
     Y,
@@ -128,7 +110,7 @@ def best_class_by_value_true_child(
     return best_key
 
 
-@jit(nopython=True)
+@njit
 def best_class(
     W,
     Y,
@@ -148,7 +130,7 @@ def best_class(
     return best_key
 
 
-@jit(nopython=True)
+@njit
 def best_class_by_value_false_child(
     W,
     Y,
@@ -175,16 +157,16 @@ def best_class_by_value_false_child(
     return best_key
 
 
-@jit(nopython=True)
+@njit
 def weighted_frequency(W, Y, I_f, y):
     return sum([W[j] for j in I_f if Y[j] == y])
 
 
-@jit(nopython=True)
-def TreePair(W, VT, X, Y, l, d) -> EventNode:
+@jit
+def TreePair(W, VT, X, Y, l, d) -> Node:
     assert len(W) == len(VT) == len(X) == len(Y), "Input data must have the same lenght"
     n = len(W)
-    tree = EventNode(l, d)
+    tree = Node(EVENT, None, None, l, d)
     # indexes of all sequences that satisfy the event condition
     I_t: set[int] = set([j for j in range(len(W)) if exist_event(X[j], VT[j], l, d)])
     # indexes of all sequences that do not satisfy the event condition
@@ -192,9 +174,9 @@ def TreePair(W, VT, X, Y, l, d) -> EventNode:
 
     # a leaf node with the class that has the most weighted frequency
     if I_f:
-        tree.false_child = Leaf(best_class(W, Y, I_f))
+        tree.false_child = Node(LEAF, best_class(W, Y, I_f), None, None, None)
     else:
-        tree.false_child = Leaf(1)
+        tree.false_child = Node(LEAF, 1, None, None, None)
 
     # for each true sequence, save the value of the first tuple in the sequence with label l
     P_t = set()
@@ -210,22 +192,28 @@ def TreePair(W, VT, X, Y, l, d) -> EventNode:
     values = sorted(list(values))
     # print("values = ", values)
 
-    tree.true_child: ValueNode = ValueNode()
+    tree.true_child = Node(VALUE, None, None, None, None)
     cnode = tree.true_child
 
     i = 1
     while True:
         cnode.v = values[i]
         # splitting by value clould results in a single class
-        cnode.true_child = Leaf(best_class_by_value_true_child(W, Y, P_t, values, i))
+        cnode.true_child = Node(
+            LEAF, best_class_by_value_true_child(W, Y, P_t, values, i), None, None, None
+        )
 
         if i < len(values) - 2:
-            cnode.false_child = ValueNode()
+            cnode.false_child = Node(type=VALUE)
             cnode = cnode.false_child
         else:
             # sometimes is the same as the true child
-            cnode.false_child = Leaf(
-                best_class_by_value_false_child(W, Y, P_t, values, i)
+            cnode.false_child = Node(
+                LEAF,
+                best_class_by_value_false_child(W, Y, P_t, values, i),
+                None,
+                None,
+                None,
             )
 
         i += 1
@@ -234,14 +222,15 @@ def TreePair(W, VT, X, Y, l, d) -> EventNode:
     return tree
 
 
+@njit
 def predict(PSI, x):
     # print(f"Predicting {x} with PSI {print_tree(PSI)}")
     vt, s_x = x
     assert len(x) > 0, "Input sequence must have at least one element"
     assert PSI is not None, "PSI must not be None"
-    while not isinstance(PSI, Leaf):
+    while PSI.type != LEAF:
         # print(f"inside while, PSI : {PSI}, x : {x}")
-        if isinstance(PSI, EventNode):
+        if PSI.type == EVENT:
             PSI = (
                 PSI.true_child
                 if exist_event(s_x, vt, PSI.l, PSI.d)
@@ -249,7 +238,7 @@ def predict(PSI, x):
             )
             if PSI is None:
                 raise ValueError("PSI is None after EventNode")
-        elif isinstance(PSI, ValueNode):
+        elif PSI.type == VALUE:
             PSI = PSI.true_child if s_x[0][2] == PSI.v else PSI.false_child
             if PSI is None:
                 raise ValueError("PSI is None after ValueNode")
@@ -257,9 +246,9 @@ def predict(PSI, x):
     return PSI.y
 
 
-@jit(nopython=True)
+@njit
 def consume(PSI, x):
-    assert isinstance(PSI, EventNode)
+    assert PSI.type == EVENT, "PSI must be an EventNode"
     vt, s_x = x
     i = None
     # assuming s_x is sorted
@@ -273,12 +262,12 @@ def consume(PSI, x):
         return (vt, s_x)
 
 
-def Best_tree(W, VT, X, Y) -> EventNode:
-    print("call to Best_tree")
+def Best_tree(W, VT, X, Y):
+    # print("call to Best_tree")
     assert (
         len(W) == len(VT) == len(X) == len(Y)
     ), f"Input data must have the same lenght, lengths are {len(W)}, {len(VT)}, {len(X)}, {len(Y)}"
-    candidate_pairs: List[Tuple[str, int]] = []
+    candidate_pairs = []
     n = len(W)
     for j in range(n):
         s = X[j]

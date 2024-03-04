@@ -1,27 +1,46 @@
 import math
-from typing import List, Tuple
 
 import numpy as np
-from numba import jit
+from numba import deferred_type, float64, int8, int32, jit, typed, types
+from numba.experimental import jitclass
+from numba.typed import List
 from util import parse_dataset
 
-# DATASET_PATH = "../datasets/activity.txt"
+DATASET_PATH = "../datasets/activity.txt"
 # DATASET_PATH = "../datasets/epitope.txt"
-DATASET_PATH = "../datasets/gene.txt"
+# DATASET_PATH = "../datasets/gene.txt"
 
 
 # TODO make the tree a class
-class EventNode:
-    def __init__(self, l, d, true_child=None, false_child=None):
-        self.l = l
-        self.d = d
-        self.true_child = true_child
-        self.false_child = false_child
+
+spec_event_node = [
+    ("l", types.unicode_type),
+    ("d", int32),
+    ("true_child", types.Optional(types.pyobject)),
+    ("false_child", types.Optional(types.pyobject)),
+]
+
+spec_value_node = [
+    ("v", types.Optional(float64)),
+    ("true_child", types.Optional(types.pyobject)),
+    ("false_child", types.Optional(types.pyobject)),
+]
+
+spec_leaf = [
+    ("y", int8),
+]
+
+
+@jitclass(spec_leaf)
+class Leaf:
+    def __init__(self, y):
+        self.y = y
 
     def __repr__(self):
-        return f"EventNode({self.l}, {self.d})"
+        return f"Leaf({self.y})"
 
 
+@jitclass(spec_value_node)
 class ValueNode:
     def __init__(self, v=None, true_child=None, false_child=None):
         self.v = v
@@ -32,12 +51,16 @@ class ValueNode:
         return f"ValueNode({self.v})"
 
 
-class Leaf:
-    def __init__(self, y):
-        self.y = y
+@jitclass(spec_event_node)
+class EventNode:
+    def __init__(self, l, d, true_child=None, false_child=None):
+        self.l = l
+        self.d = d
+        self.true_child = true_child
+        self.false_child = false_child
 
     def __repr__(self):
-        return f"Leaf({self.y})"
+        return f"EventNode({self.l}, {self.d})"
 
 
 def print_tree(root, indent=0, prefix=""):
@@ -59,6 +82,7 @@ def print_tree(root, indent=0, prefix=""):
         raise ValueError(f"Unknown type {type(root)}")
 
 
+@jit(nopython=True)
 def exist_event(s, vt, l, d):
     # print(f"call to exist_event with s = {s}, vt = {vt}, l = {l}, d = {d}")
     # implements ∃i(s[i].l = l, s[i].vt - vt <= d)
@@ -68,6 +92,7 @@ def exist_event(s, vt, l, d):
     return False
 
 
+@jit(nopython=True)
 def min_label_index(s, l):
     # implements min{i | s[i].l = l}
     for i, si in enumerate(s):
@@ -76,6 +101,86 @@ def min_label_index(s, l):
     return None
 
 
+@jit(nopython=True)
+def best_class_by_value_true_child(
+    W,
+    Y,
+    P_t,
+    values,
+    i,
+):
+    # true child is a leaf node with the class that has the most weighted frequency
+    keys = [1, -1]
+    best_key = keys[0]
+    best_val = -math.inf
+    for key in keys:
+        val = sum(
+            [
+                W[int(j)]
+                for j, v in P_t
+                if Y[int(j)] == key and values[i - 1] < v <= values[i]
+            ]
+        )
+        if val > best_val:
+            best_val = val
+            best_key = key
+
+    return best_key
+
+
+@jit(nopython=True)
+def best_class(
+    W,
+    Y,
+    I_f,
+):
+    # true child is a leaf node with the class that has the most weighted frequency
+
+    keys = [1, -1]
+    best_key = keys[0]
+    best_val = -math.inf
+    for key in keys:
+        val = sum([W[i] for i in I_f if Y[i] == key])
+        if val > best_val:
+            best_val = val
+            best_key = key
+
+    return best_key
+
+
+@jit(nopython=True)
+def best_class_by_value_false_child(
+    W,
+    Y,
+    P_t,
+    values,
+    i,
+):
+    # true child is a leaf node with the class that has the most weighted frequency
+    keys = [1, -1]
+    best_key = keys[0]
+    best_val = -math.inf
+    for key in keys:
+        val: float = sum(
+            [
+                W[int(j)]
+                for j, v in P_t
+                if Y[int(j)] == key and values[i] < v <= values[i + 1]
+            ]
+        )
+        if val > best_val:
+            best_val = val
+            best_key = key
+
+    return best_key
+
+
+@jit(nopython=True)
+def weighted_frequency(W, Y, I_f, y):
+    return sum([W[j] for j in I_f if Y[j] == y])
+
+
+@jit(nopython=True)
 def TreePair(W, VT, X, Y, l, d) -> EventNode:
     assert len(W) == len(VT) == len(X) == len(Y), "Input data must have the same lenght"
     n = len(W)
@@ -83,30 +188,19 @@ def TreePair(W, VT, X, Y, l, d) -> EventNode:
     # indexes of all sequences that satisfy the event condition
     I_t: set[int] = set([j for j in range(len(W)) if exist_event(X[j], VT[j], l, d)])
     # indexes of all sequences that do not satisfy the event condition
-    I_f: set[int] = set(range(len(W))).difference(I_t)
-
-    # print("I_t = ", I_t)
-    # print("I_f = ", I_f)
-
-    # print("classes of I_f")
-    # for j in I_f:
-    #    print(Y[j])
+    I_f: set[int] = set(range(n)).difference(I_t)
 
     # a leaf node with the class that has the most weighted frequency
-    tree.false_child = Leaf(
-        max([1, -1], key=lambda y: sum([W[j] for j in I_f if Y[j] == y]))
-    )
-
-    # print("tree.false_child = ", tree.false_child)
+    if I_f:
+        tree.false_child = Leaf(best_class(W, Y, I_f))
+    else:
+        tree.false_child = Leaf(1)
 
     # for each true sequence, save the value of the first tuple in the sequence with label l
-    P_t = set(
-        (j, X[j][t][2])
-        for j, t in enumerate([min_label_index(X[j], l) for j in range(n)])
-        if j in I_t
-    )
-
-    # print("P_t = ", P_t)
+    P_t = set()
+    for j, t in enumerate([min_label_index(X[j], l) for j in range(n)]):
+        if j in I_t:
+            P_t.add((float(j), float(X[j][t][2])))
 
     # P_t should not have None values
     assert None not in [i for i, _ in P_t], "P_t should not have None values"
@@ -116,93 +210,23 @@ def TreePair(W, VT, X, Y, l, d) -> EventNode:
     values = sorted(list(values))
     # print("values = ", values)
 
-    tree.true_child = ValueNode()
+    tree.true_child: ValueNode = ValueNode()
     cnode = tree.true_child
 
     i = 1
     while True:
         cnode.v = values[i]
-        # print(f"cnode.v = {cnode.v}")
-
-        # handle the case where splitting by value results in a single class
-        # c = set([Y[j] for j, v in P_t if values[i - 1] < v <= values[i]])
-        # if len(c) == 1:
-        #    # print("single class")
-        #    cnode.true_child = Leaf(list(c)[0])
-        #    cnode.false_child = Leaf(list(c)[0])
-        #    break
-
-        # print("working on true_child")
-
-        # for j, v in P_t:
-        #    if values[i - 1] < v <= values[i]:
-        #        print(f"j = {j}, v = {v}, Y[j] = {Y[j]}")
-
-        # print("count of 1")
-        # print(sum([1 for j, v in P_t if Y[j] == 1 and values[i - 1] < v <= values[i]]))
-        # print("count of -1")
-        # print(sum([1 for j, v in P_t if Y[j] == -1 and values[i - 1] < v <= values[i]]))
-
-        # true child is a leaf node with the class that has the most weighted frequency
-        cnode.true_child = Leaf(
-            max(
-                [1, -1],
-                key=lambda y: sum(
-                    [
-                        W[j]
-                        for j, v in P_t
-                        if Y[j] == y and values[i - 1] < v <= values[i]
-                    ]
-                ),
-            )
-        )
-
-        # print("cnode.true_child = ", cnode.true_child)
+        # splitting by value clould results in a single class
+        cnode.true_child = Leaf(best_class_by_value_true_child(W, Y, P_t, values, i))
 
         if i < len(values) - 2:
-            # print("len(values) - 2")
             cnode.false_child = ValueNode()
             cnode = cnode.false_child
         else:
-
-            # print("working on false_child")
-
-            # for j, v in P_t:
-            #    if values[i] < v <= values[i + 1]:
-            #        print(f"j = {j}, v = {v}, Y[j] = {Y[j]}")
-
-            # print("count of 1")
-            # print(
-            #    sum([1 for j, v in P_t if Y[j] == 1 and values[i] < v <= values[i + 1]])
-            # )
-            # print("count of -1")
-            # print(
-            #    sum(
-            #        [1 for j, v in P_t if Y[j] == -1 and values[i] < v <= values[i + 1]]
-            #    )
-            # )
-
-            # is the same as the true child,
-            # but true and false child should not be the same
+            # sometimes is the same as the true child
             cnode.false_child = Leaf(
-                max(
-                    [1, -1],
-                    key=lambda y: sum(
-                        [
-                            W[j]
-                            for j, v in P_t
-                            if Y[j] == y and values[i] < v <= values[i + 1]
-                        ]
-                    ),
-                )
+                best_class_by_value_false_child(W, Y, P_t, values, i)
             )
-
-            # false child should not be the same as the true child
-            # if cnode.false_child.y == cnode.true_child.y:
-            #    # print("false child is the same as the true child")
-            #    cnode.false_child.y = -cnode.false_child.y
-
-            # print("cnode.false_child = ", cnode.false_child)
 
         i += 1
         if i > len(values) - 1:
@@ -220,7 +244,7 @@ def predict(PSI, x):
         if isinstance(PSI, EventNode):
             PSI = (
                 PSI.true_child
-                if any((l == PSI.l and d - vt <= PSI.d) for d, l, v in s_x)
+                if exist_event(s_x, vt, PSI.l, PSI.d)
                 else PSI.false_child
             )
             if PSI is None:
@@ -233,12 +257,10 @@ def predict(PSI, x):
     return PSI.y
 
 
+@jit(nopython=True)
 def consume(PSI, x):
-    # print(f"Consuming {x} with {PSI}")
-    # x = (vt, s_x) , vt belongs to R^(>=0), s_x belongs to s_x belongs to (R^+ x L, x R)^*
     assert isinstance(PSI, EventNode)
     vt, s_x = x
-    # print(f"vt = {vt}, s_x = {s_x}")
     i = None
     # assuming s_x is sorted
     for idx, s in enumerate(s_x):
@@ -246,14 +268,13 @@ def consume(PSI, x):
             i = idx
             break
     if i is not None:
-        # print(f"i = {i}")
         return (s_x[i][0], s_x[i + 1 :])
     else:
         return (vt, s_x)
 
 
 def Best_tree(W, VT, X, Y) -> EventNode:
-    # print("call to Best_tree")
+    print("call to Best_tree")
     assert (
         len(W) == len(VT) == len(X) == len(Y)
     ), f"Input data must have the same lenght, lengths are {len(W)}, {len(VT)}, {len(X)}, {len(Y)}"
@@ -277,6 +298,7 @@ def Best_tree(W, VT, X, Y) -> EventNode:
 
 
 def main():
+    print("call to main")
     df = parse_dataset(DATASET_PATH)
     train = df.sample(frac=0.8)
     test = df.drop(train.index)

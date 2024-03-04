@@ -1,15 +1,17 @@
 import functools
 import math
+import time
 from collections import OrderedDict
 
 import numba as nb
 import numpy as np
 from numba import deferred_type, float32, float64, int8, jit, njit, optional, types
 from numba.experimental import jitclass
+from numba.typed import List
 from util import parse_dataset
 
-DATASET_PATH = "../datasets/activity.txt"
-# DATASET_PATH = "../datasets/epitope.txt"
+# DATASET_PATH = "../datasets/activity.txt"
+DATASET_PATH = "../datasets/epitope.txt"
 # DATASET_PATH = "../datasets/gene.txt"
 
 
@@ -162,7 +164,6 @@ def weighted_frequency(W, Y, I_f, y):
     return sum([W[j] for j in I_f if Y[j] == y])
 
 
-@jit
 def TreePair(W, VT, X, Y, l, d) -> Node:
     assert len(W) == len(VT) == len(X) == len(Y), "Input data must have the same lenght"
     n = len(W)
@@ -262,6 +263,10 @@ def consume(PSI, x):
         return (vt, s_x)
 
 
+def weighted_prediction(psi, W, VT, X, Y):
+    return sum([w * (predict(psi, (VT[i], X[i])) - Y[i]) for i, w in enumerate(W)])
+
+
 def Best_tree(W, VT, X, Y):
     # print("call to Best_tree")
     assert (
@@ -276,14 +281,19 @@ def Best_tree(W, VT, X, Y):
             if (si[1], si[0] - vt) not in candidate_pairs:
                 candidate_pairs.append((si[1], si[0] - vt))
 
-    PSI = [TreePair(W, VT, X, Y, l, vt) for l, vt in candidate_pairs]
+    PSI = []
+    for l, vt in candidate_pairs:
+        PSI.append(TreePair(W, VT, X, Y, l, vt))
 
-    return max(
-        PSI,
-        key=lambda psi: sum(
-            [w * (predict(psi, (VT[i], X[i])) - Y[i]) for i, w in enumerate(W)]
-        ),
-    )
+    best_tree = None
+    best_error = math.inf
+    for psi in PSI:
+        error = weighted_prediction(psi, W, VT, X, Y)
+        if error < best_error:
+            best_error = error
+            best_tree = psi
+
+    return best_tree
 
 
 def main():
@@ -323,8 +333,9 @@ def is_valid_weak_learner():
     cycles = 100
     accuracies = []
     count_accurancy_50 = 0
-    for _ in range(cycles):
-        print(f"Cycle {_ + 1}")
+    for c in range(cycles):
+        print(f"Cycle {c + 1}")
+        start_time = time.time()
         df = parse_dataset(DATASET_PATH)
         train = df.sample(frac=0.8)
         test = df.drop(train.index)
@@ -349,6 +360,9 @@ def is_valid_weak_learner():
         accuracies.append(correct / len(test))
         if accuracies[-1] >= 0.5:
             count_accurancy_50 += 1
+
+        end_time = time.time()
+        print(f"Cycle {c + 1} took {end_time - start_time} seconds")
 
     print(f"Mean accuracy: {np.mean(accuracies)}")
     print(f"Percentage of times with accuracy over 50%: {count_accurancy_50 / cycles}")

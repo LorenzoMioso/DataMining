@@ -1,0 +1,30 @@
+---------------------------
+count_labels parse_dataset
+---------------------------
+Mean accuracy: 0.49776744186046523
+Percentage of times with accuracy over 50%: 0.49
+Standard deviation: 0.02378222814073611
+---------------------------
+constant_value parse_dataset
+---------------------------
+Mean accuracy: 0.5138139534883721
+Percentage of times with accuracy over 50%: 0.75
+Standard deviation: 0.02253491972061348
+---------------------------
+index_tuple parse_dataset
+---------------------------
+Mean accuracy: 0.4881976744186046
+Percentage of times with accuracy over 50%: 0.21
+Standard deviation: 0.014030191312063772
+---------------------------
+frequency_ratio parse_dataset
+---------------------------
+Mean accuracy: 0.49901162790697673
+Percentage of times with accuracy over 50%: 0.55
+Standard deviation: 0.020454790603335063
+---------------------------
+unique_label_count parse_dataset
+---------------------------
+Mean accuracy: 0.5063604651162791
+Percentage of times with accuracy over 50%: 0.62
+Standard deviation: 0.023605770966679193

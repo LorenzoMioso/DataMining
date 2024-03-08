@@ -6,9 +6,11 @@ import pandas as pd
 from tree import *
 from util import *
 
-# DATASET_PATH = "../datasets/activity.txt"
-DATASET_PATH = "../datasets/epitope.txt"
-# DATASET_PATH = "../datasets/gene.txt"
+DATASET_PATH = "../datasets/activity.txt"  # 35 lines
+# DATASET_PATH = "../datasets/question.txt"  # 1730 lines
+# DATASET_PATH = "../datasets/epitope.txt" # 2392 lines
+DATASET_PATH = "../datasets/gene.txt"  # 2942 lines
+# DATASET_PATH = "../datasets/robot.txt" # 4302 lines
 ITERATIONS = 30
 
 

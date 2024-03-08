@@ -1,0 +1,165 @@
+############################################
+Dataset: ../datasets/activity.txt
+############################################
+---------------------------
+count_labels parse_dataset
+---------------------------
+Mean accuracy: 0.5914285714285713
+Percentage of times with accuracy over 50%: 0.82
+Standard deviation: 0.15651823914059818
+---------------------------
+constant_value parse_dataset
+---------------------------
+Mean accuracy: 0.5914285714285714
+Percentage of times with accuracy over 50%: 0.82
+Standard deviation: 0.15651823914059818
+---------------------------
+index_tuple parse_dataset
+---------------------------
+Mean accuracy: 0.5914285714285714
+Percentage of times with accuracy over 50%: 0.82
+Standard deviation: 0.15651823914059818
+---------------------------
+frequency_ratio parse_dataset
+---------------------------
+Mean accuracy: 0.5928571428571427
+Percentage of times with accuracy over 50%: 0.81
+Standard deviation: 0.16459598031147019
+---------------------------
+unique_label_count parse_dataset
+---------------------------
+Mean accuracy: 0.5914285714285714
+Percentage of times with accuracy over 50%: 0.82
+Standard deviation: 0.15651823914059818
+############################################
+Dataset: ../datasets/question.txt
+############################################
+---------------------------
+count_labels parse_dataset
+---------------------------
+Mean accuracy: 0.48190751445086705
+Percentage of times with accuracy over 50%: 0.2
+Standard deviation: 0.04101525726047898
+---------------------------
+constant_value parse_dataset
+---------------------------
+Mean accuracy: 0.49809248554913294
+Percentage of times with accuracy over 50%: 0.52
+Standard deviation: 0.03971064610167771
+---------------------------
+index_tuple parse_dataset
+---------------------------
+Mean accuracy: 0.4729479768786128
+Percentage of times with accuracy over 50%: 0.2
+Standard deviation: 0.026424215523384274
+---------------------------
+frequency_ratio parse_dataset
+---------------------------
+Mean accuracy: 0.4946242774566473
+Percentage of times with accuracy over 50%: 0.36
+Standard deviation: 0.039762778481570255
+---------------------------
+unique_label_count parse_dataset
+---------------------------
+Mean accuracy: 0.4953757225433526
+Percentage of times with accuracy over 50%: 0.36
+Standard deviation: 0.03961541200157328
+############################################
+Dataset: ../datasets/epitope.txt
+############################################
+---------------------------
+count_labels parse_dataset
+---------------------------
+Mean accuracy: 0.560334728033473
+Percentage of times with accuracy over 50%: 1.0
+Standard deviation: 0.017455072040069627
+---------------------------
+constant_value parse_dataset
+---------------------------
+Mean accuracy: 0.560334728033473
+Percentage of times with accuracy over 50%: 1.0
+Standard deviation: 0.017455072040069627
+---------------------------
+index_tuple parse_dataset
+---------------------------
+Mean accuracy: 0.560334728033473
+Percentage of times with accuracy over 50%: 1.0
+Standard deviation: 0.017455072040069627
+---------------------------
+frequency_ratio parse_dataset
+---------------------------
+Mean accuracy: 0.560334728033473
+Percentage of times with accuracy over 50%: 1.0
+Standard deviation: 0.017455072040069627
+---------------------------
+unique_label_count parse_dataset
+---------------------------
+Mean accuracy: 0.560334728033473
+Percentage of times with accuracy over 50%: 1.0
+Standard deviation: 0.017455072040069627
+############################################
+Dataset: ../datasets/gene.txt
+############################################
+---------------------------
+count_labels parse_dataset
+---------------------------
+Mean accuracy: 0.615170068027211
+Percentage of times with accuracy over 50%: 1.0
+Standard deviation: 0.007867663833905294
+---------------------------
+constant_value parse_dataset
+---------------------------
+Mean accuracy: 0.5085714285714286
+Percentage of times with accuracy over 50%: 0.64
+Standard deviation: 0.02143116278468074
+---------------------------
+index_tuple parse_dataset
+---------------------------
+Mean accuracy: 0.4893537414965985
+Percentage of times with accuracy over 50%: 0.16
+Standard deviation: 0.011315902758341647
+---------------------------
+frequency_ratio parse_dataset
+---------------------------
+Mean accuracy: 0.5428571428571428
+Percentage of times with accuracy over 50%: 1.0
+Standard deviation: 0.012054452480727453
+---------------------------
+unique_label_count parse_dataset
+---------------------------
+Mean accuracy: 0.5085714285714286
+Percentage of times with accuracy over 50%: 0.64
+Standard deviation: 0.02143116278468074
+############################################
+Dataset: ../datasets/robot.txt
+############################################
+---------------------------
+count_labels parse_dataset
+---------------------------
+Mean accuracy: 0.5007906976744184
+Percentage of times with accuracy over 50%: 0.48
+Standard deviation: 0.02261613259951375
+---------------------------
+constant_value parse_dataset
+---------------------------
+Mean accuracy: 0.5204418604651162
+Percentage of times with accuracy over 50%: 0.64
+Standard deviation: 0.02134231293123435
+---------------------------
+index_tuple parse_dataset
+---------------------------
+Mean accuracy: 0.49318604651162784
+Percentage of times with accuracy over 50%: 0.48
+Standard deviation: 0.015089439499995121
+---------------------------
+frequency_ratio parse_dataset
+---------------------------
+Mean accuracy: 0.5007906976744184
+Percentage of times with accuracy over 50%: 0.48
+Standard deviation: 0.02261613259951375
+---------------------------
+unique_label_count parse_dataset
+---------------------------
+Mean accuracy: 0.5197674418604652
+Percentage of times with accuracy over 50%: 0.64
+Standard deviation: 0.02186046511627908

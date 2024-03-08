@@ -1,1 +1,30 @@
-call to adaBoost with iterations = 1
+---------------------------
+count_labels parse_dataset
+---------------------------
+Mean accuracy: 0.5214999999999999
+Percentage of times with accuracy over 50%: 0.64
+Standard deviation: 0.12067621969551416
+---------------------------
+constant_value parse_dataset
+---------------------------
+Mean accuracy: 0.505
+Percentage of times with accuracy over 50%: 0.57
+Standard deviation: 0.11565033506220378
+---------------------------
+index_tuple parse_dataset
+---------------------------
+Mean accuracy: 0.5005
+Percentage of times with accuracy over 50%: 0.58
+Standard deviation: 0.11011244253035168
+---------------------------
+frequency_ratio parse_dataset
+---------------------------
+Mean accuracy: 0.5275000000000001
+Percentage of times with accuracy over 50%: 0.69
+Standard deviation: 0.11031205736455103
+---------------------------
+unique_label_count parse_dataset
+---------------------------
+Mean accuracy: 0.4995000000000001
+Percentage of times with accuracy over 50%: 0.59
+Standard deviation: 0.11412602682999178

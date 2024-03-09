@@ -6,10 +6,10 @@ import pandas as pd
 from tree import *
 from util import *
 
-DATASET_PATH = "../datasets/activity.txt"  # 35 lines
+# DATASET_PATH = "../datasets/activity.txt"  # 35 lines
 # DATASET_PATH = "../datasets/question.txt"  # 1730 lines
-# DATASET_PATH = "../datasets/epitope.txt" # 2392 lines
-DATASET_PATH = "../datasets/gene.txt"  # 2942 lines
+DATASET_PATH = "../datasets/epitope.txt"  # 2392 lines
+# DATASET_PATH = "../datasets/gene.txt"  # 2942 lines
 # DATASET_PATH = "../datasets/robot.txt" # 4302 lines
 ITERATIONS = 30
 
@@ -101,37 +101,38 @@ def ada_boost(X_0: list, Y: list, iterations: int):
 
         W.append([0.0] * n)
         # update the weights (from exercise)
-        for j in range(n):
-            if Y[j] * predict(PSI[t], (X[t][0][j], X[t][1][j])) >= 0:
-                W[t + 1][j] = (
-                    0.5
-                    * W[t][j]
-                    / sum(
-                        [
-                            W[t][i]
-                            for i in range(n)
-                            if predict(PSI[t], (X[t][0][j], X[t][1][j])) * Y[i] >= 0
-                        ]
-                    )
-                )
-            else:
-                W[t + 1][j] = (
-                    0.5
-                    * W[t][j]
-                    / sum(
-                        [
-                            W[t][i]
-                            for i in range(n)
-                            if predict(PSI[t], (X[t][0][j], X[t][1][j])) * Y[i] <= 0
-                        ]
-                    )
-                )
-        # update the weights (from paper)
         # for j in range(n):
-        #    W[t + 1][j] = W[t][j] * np.exp(
-        #        -a[t] * Y[j] * predict(PSI[t], (X[t][0][j], X[t][1][j]))
-        #    )
-        # W[t + 1] = [w / sum(W[t + 1]) for w in W[t + 1]]
+        #    if Y[j] * predict(PSI[t], (X[t][0][j], X[t][1][j])) >= 0:
+        #        W[t + 1][j] = (
+        #            0.5
+        #            * W[t][j]
+        #            / sum(
+        #                [
+        #                    W[t][i]
+        #                    for i in range(n)
+        #                    if predict(PSI[t], (X[t][0][j], X[t][1][j])) * Y[i] >= 0
+        #                ]
+        #            )
+        #        )
+        #    else:
+        #        W[t + 1][j] = (
+        #            0.5
+        #            * W[t][j]
+        #            / sum(
+        #                [
+        #                    W[t][i]
+        #                    for i in range(n)
+        #                    if predict(PSI[t], (X[t][0][j], X[t][1][j])) * Y[i] <= 0
+        #                ]
+        #            )
+        #        )
+
+        # update the weights (from paper)
+        for j in range(n):
+            W[t + 1][j] = W[t][j] * np.exp(
+                -a[t] * Y[j] * predict(PSI[t], (X[t][0][j], X[t][1][j]))
+            )
+        W[t + 1] = [w / sum(W[t + 1]) for w in W[t + 1]]
 
         # print(f"W[{t + 1}] = {W[t + 1]}")
 
@@ -168,6 +169,7 @@ def predict_boost(PSI, a, x, y):
         if i >= len(PSI):
             # print(f"weighted prediction = {res}")
             break
+    print(f"weighted prediction = {res}")
     return res
 
     # prediction with consumption

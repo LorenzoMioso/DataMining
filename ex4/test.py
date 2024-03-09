@@ -13,6 +13,7 @@ from util import *
 
 def create_and_test_best_tree(dataset_path, parse_dataset_func=count_labels):
     df = parse_dataset(dataset_path, gen_tuple=parse_dataset_func)
+    # df = parse_dataset_tf_idf(dataset_path)
     train = df.sample(frac=0.8)
     test = df.drop(train.index)
 
@@ -59,26 +60,40 @@ def is_valid_weak_learner(dataset_path, parse_dataset_func=count_labels):
 
 
 def try_different_parse_dataset(dataset_path):
+    # print("---------------------------")
+    # print("count_labels parse_dataset")
+    # print("---------------------------")
+    # is_valid_weak_learner(dataset_path, count_labels)
+    # print("---------------------------")
+    # print("constant_value parse_dataset")
+    # print("---------------------------")
+    # is_valid_weak_learner(dataset_path, constant_value)
+    # print("---------------------------")
+    # print("index_tuple parse_dataset")
+    # print("---------------------------")
+    # is_valid_weak_learner(dataset_path, index_tuple)
+    # print("---------------------------")
+    # print("frequency_ratio parse_dataset")
+    # print("---------------------------")
+    # is_valid_weak_learner(dataset_path, frequency_ratio)
+    # print("---------------------------")
+    # print("unique_label_count parse_dataset")
+    # print("---------------------------")
+    # is_valid_weak_learner(dataset_path, unique_label_count)
+
     print("---------------------------")
-    print("count_labels parse_dataset")
+    print("equals_next parse_dataset")
     print("---------------------------")
-    is_valid_weak_learner(dataset_path, count_labels)
+    is_valid_weak_learner(dataset_path, equals_next)
     print("---------------------------")
-    print("constant_value parse_dataset")
+    print("equals_previous parse_dataset")
     print("---------------------------")
-    is_valid_weak_learner(dataset_path, constant_value)
-    print("---------------------------")
-    print("index_tuple parse_dataset")
-    print("---------------------------")
-    is_valid_weak_learner(dataset_path, index_tuple)
-    print("---------------------------")
-    print("frequency_ratio parse_dataset")
-    print("---------------------------")
-    is_valid_weak_learner(dataset_path, frequency_ratio)
-    print("---------------------------")
-    print("unique_label_count parse_dataset")
-    print("---------------------------")
-    is_valid_weak_learner(dataset_path, unique_label_count)
+    is_valid_weak_learner(dataset_path, equals_previous)
+
+    # print("---------------------------")
+    # print("tf_idf parse_dataset")
+    # print("---------------------------")
+    # is_valid_weak_learner(dataset_path)
 
 
 if __name__ == "__main__":

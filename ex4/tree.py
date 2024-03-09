@@ -6,8 +6,6 @@ import numpy as np
 from util import *
 
 
-
-
 class EventNode:
     def __init__(self, l, d, true_child=None, false_child=None):
         self.l = l
@@ -241,6 +239,3 @@ def main():
         if p == y:
             correct += 1
     print(f"Accuracy: {correct / len(test)}")
-
-
-

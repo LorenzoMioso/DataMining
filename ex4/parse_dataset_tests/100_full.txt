@@ -31,6 +31,24 @@ unique_label_count parse_dataset
 Mean accuracy: 0.5914285714285714
 Percentage of times with accuracy over 50%: 0.82
 Standard deviation: 0.15651823914059818
+---------------------------
+tf_idf parse_dataset
+---------------------------
+Mean accuracy: 0.5457142857142857
+Percentage of times with accuracy over 50%: 0.66
+Standard deviation: 0.14760675832102277
+---------------------------
+equals_next parse_dataset
+---------------------------
+Mean accuracy: 0.577142857142857
+Percentage of times with accuracy over 50%: 0.68
+Standard deviation: 0.2320450343342509
+---------------------------
+equals_previous parse_dataset
+---------------------------
+Mean accuracy: 0.577142857142857
+Percentage of times with accuracy over 50%: 0.68
+Standard deviation: 0.2320450343342509
 ############################################
 Dataset: ../datasets/question.txt
 ############################################
@@ -64,6 +82,24 @@ unique_label_count parse_dataset
 Mean accuracy: 0.4953757225433526
 Percentage of times with accuracy over 50%: 0.36
 Standard deviation: 0.03961541200157328
+---------------------------
+tf_idf parse_dataset
+---------------------------
+Mean accuracy: 0.48335260115606943
+Percentage of times with accuracy over 50%: 0.32
+Standard deviation: 0.03600353411694126
+---------------------------
+equals_next parse_dataset
+---------------------------
+Mean accuracy: 0.4784971098265896
+Percentage of times with accuracy over 50%: 0.16
+Standard deviation: 0.02132595487580561
+---------------------------
+equals_previous parse_dataset
+---------------------------
+Mean accuracy: 0.5096531791907514
+Percentage of times with accuracy over 50%: 0.68
+Standard deviation: 0.02794730438963536
 ############################################
 Dataset: ../datasets/epitope.txt
 ############################################
@@ -97,6 +133,24 @@ unique_label_count parse_dataset
 Mean accuracy: 0.560334728033473
 Percentage of times with accuracy over 50%: 1.0
 Standard deviation: 0.017455072040069627
+---------------------------
+tf_idf parse_dataset
+---------------------------
+Mean accuracy: 0.554644351464435
+Percentage of times with accuracy over 50%: 1.0
+Standard deviation: 0.021904235247711425
+---------------------------
+equals_next parse_dataset
+---------------------------
+Mean accuracy: 0.5690376569037658
+Percentage of times with accuracy over 50%: 1.0
+Standard deviation: 0.013473842835233984
+---------------------------
+equals_previous parse_dataset
+---------------------------
+Mean accuracy: 0.5690376569037658
+Percentage of times with accuracy over 50%: 1.0
+Standard deviation: 0.013473842835233984
 ############################################
 Dataset: ../datasets/gene.txt
 ############################################
@@ -130,6 +184,24 @@ unique_label_count parse_dataset
 Mean accuracy: 0.5085714285714286
 Percentage of times with accuracy over 50%: 0.64
 Standard deviation: 0.02143116278468074
+---------------------------
+tf_idf parse_dataset
+---------------------------
+Mean accuracy: 0.5014965986394557
+Percentage of times with accuracy over 50%: 0.34
+Standard deviation: 0.0255750649364527
+---------------------------
+equals_next parse_dataset
+---------------------------
+Mean accuracy: 0.4947959183673468
+Percentage of times with accuracy over 50%: 0.32
+Standard deviation: 0.019133703674858022
+---------------------------
+equals_previous parse_dataset
+---------------------------
+Mean accuracy: 0.5155102040816327
+Percentage of times with accuracy over 50%: 0.48
+Standard deviation: 0.030225524042930465
 ############################################
 Dataset: ../datasets/robot.txt
 ############################################
@@ -163,3 +235,21 @@ unique_label_count parse_dataset
 Mean accuracy: 0.5197674418604652
 Percentage of times with accuracy over 50%: 0.64
 Standard deviation: 0.02186046511627908
+---------------------------
+tf_idf parse_dataset
+---------------------------
+Mean accuracy: 0.4873255813953488
+Percentage of times with accuracy over 50%: 0.16
+Standard deviation: 0.012489584627810092
+---------------------------
+equals_next parse_dataset
+---------------------------
+Mean accuracy: 0.4881395348837209
+Percentage of times with accuracy over 50%: 0.16
+Standard deviation: 0.010224626947432834
+---------------------------
+equals_previous parse_dataset
+---------------------------
+Mean accuracy: 0.5093953488372094
+Percentage of times with accuracy over 50%: 0.68
+Standard deviation: 0.013728496140279215

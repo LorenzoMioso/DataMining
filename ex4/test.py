@@ -4,7 +4,9 @@ import numpy as np
 from tree import Best_tree, predict
 from util import *
 
-# DATASET_PATH = "../datasets/activity.txt"  # 35 lines
+TRAIN_TEST_CYCLES = 100
+
+DATASET_PATH = "../datasets/activity.txt"  # 35 lines
 # DATASET_PATH = "../datasets/question.txt"  # 1730 lines
 # DATASET_PATH = "../datasets/epitope.txt"  # 2392 lines
 # DATASET_PATH = "../datasets/gene.txt"  # 2942 lines
@@ -13,7 +15,6 @@ from util import *
 
 def create_and_test_best_tree(dataset_path, parse_dataset_func=count_labels):
     df = parse_dataset(dataset_path, gen_tuple=parse_dataset_func)
-    # df = parse_dataset_tf_idf(dataset_path)
     train = df.sample(frac=0.8)
     test = df.drop(train.index)
 
@@ -36,15 +37,14 @@ def create_and_test_best_tree(dataset_path, parse_dataset_func=count_labels):
 
 
 def is_valid_weak_learner(dataset_path, parse_dataset_func=count_labels):
-    cycles = 100
     accuracies = []
     count_accurancy_50 = 0
 
-    input_func = [(dataset_path, parse_dataset_func) for _ in range(cycles)]
+    input_func = [(dataset_path, parse_dataset_func) for _ in range(TRAIN_TEST_CYCLES)]
 
     # accuracies = [
     #    create_and_test_best_tree(DATASET_PATH, parse_dataset_func)
-    #    for _ in range(cycles)
+    #    for _ in range(TRAIN_TEST_CYCLES)
     # ]
 
     with Pool(16) as p:
@@ -55,32 +55,41 @@ def is_valid_weak_learner(dataset_path, parse_dataset_func=count_labels):
             count_accurancy_50 += 1
 
     print(f"Mean accuracy: {np.mean(accuracies)}")
-    print(f"Percentage of times with accuracy over 50%: {count_accurancy_50 / cycles}")
+    print(
+        f"Percentage of times with accuracy over 50%: {count_accurancy_50 / TRAIN_TEST_CYCLES}"
+    )
     print(f"Standard deviation: {np.std(accuracies)}")
 
 
 def try_different_parse_dataset(dataset_path):
-    # print("---------------------------")
-    # print("count_labels parse_dataset")
-    # print("---------------------------")
-    # is_valid_weak_learner(dataset_path, count_labels)
-    # print("---------------------------")
-    # print("constant_value parse_dataset")
-    # print("---------------------------")
-    # is_valid_weak_learner(dataset_path, constant_value)
-    # print("---------------------------")
-    # print("index_tuple parse_dataset")
-    # print("---------------------------")
-    # is_valid_weak_learner(dataset_path, index_tuple)
-    # print("---------------------------")
-    # print("frequency_ratio parse_dataset")
-    # print("---------------------------")
-    # is_valid_weak_learner(dataset_path, frequency_ratio)
-    # print("---------------------------")
-    # print("unique_label_count parse_dataset")
-    # print("---------------------------")
-    # is_valid_weak_learner(dataset_path, unique_label_count)
-
+    print("---------------------------")
+    print("count_labels parse_dataset")
+    print("---------------------------")
+    is_valid_weak_learner(dataset_path, count_labels)
+    print("---------------------------")
+    print("progressive_count_labels parse_dataset")
+    print("---------------------------")
+    is_valid_weak_learner(dataset_path, progressive_count_labels)
+    print("---------------------------")
+    print("constant_value parse_dataset")
+    print("---------------------------")
+    is_valid_weak_learner(dataset_path, constant_value)
+    print("---------------------------")
+    print("class_value parse_dataset")
+    print("---------------------------")
+    is_valid_weak_learner(dataset_path, class_value)
+    print("---------------------------")
+    print("index_tuple parse_dataset")
+    print("---------------------------")
+    is_valid_weak_learner(dataset_path, index_tuple)
+    print("---------------------------")
+    print("frequency_ratio parse_dataset")
+    print("---------------------------")
+    is_valid_weak_learner(dataset_path, frequency_ratio)
+    print("---------------------------")
+    print("unique_label_count parse_dataset")
+    print("---------------------------")
+    is_valid_weak_learner(dataset_path, unique_label_count)
     print("---------------------------")
     print("equals_next parse_dataset")
     print("---------------------------")
@@ -89,11 +98,10 @@ def try_different_parse_dataset(dataset_path):
     print("equals_previous parse_dataset")
     print("---------------------------")
     is_valid_weak_learner(dataset_path, equals_previous)
-
-    # print("---------------------------")
-    # print("tf_idf parse_dataset")
-    # print("---------------------------")
-    # is_valid_weak_learner(dataset_path)
+    print("---------------------------")
+    print("tf_idf parse_dataset")
+    print("---------------------------")
+    is_valid_weak_learner(dataset_path, compute_tf_idf_row)
 
 
 if __name__ == "__main__":

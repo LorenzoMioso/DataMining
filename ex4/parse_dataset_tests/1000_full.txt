@@ -250,7 +250,6 @@ tf_idf parse_dataset
 Mean accuracy: 0.4935952380952381
 Percentage of times with accuracy over 50%: 0.357
 Standard deviation: 0.016877505435808873
-
 ############################################
 Dataset: ../datasets/robot.txt
 ############################################

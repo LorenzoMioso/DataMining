@@ -5,6 +5,12 @@ from typing import List, Tuple
 import numpy as np
 from util import *
 
+# DATASET_PATH = "../datasets/activity.txt"  # 35 lines
+DATASET_PATH = "../datasets/question.txt"  # 1730 lines
+# DATASET_PATH = "../datasets/epitope.txt"  # 2392 lines
+# DATASET_PATH = "../datasets/gene.txt"  # 2942 lines
+# DATASET_PATH = "../datasets/robot.txt" # 4302 lines
+
 
 class EventNode:
     def __init__(self, l, d, true_child=None, false_child=None):
@@ -195,11 +201,11 @@ def Best_tree(W, VT, X, Y) -> EventNode:
             if (si[1], si[0] - vt) not in candidate_pairs:
                 candidate_pairs.append((si[1], si[0] - vt))
 
-    PSI = [TreePair(W, VT, X, Y, l, vt) for l, vt in candidate_pairs]
+    # PSI = [TreePair(W, VT, X, Y, l, vt) for l, vt in candidate_pairs]
 
-    # PSI = []
-    # with Pool(16) as p:
-    #    PSI = p.starmap(TreePair, [(W, VT, X, Y, l, vt) for l, vt in candidate_pairs])
+    PSI = []
+    with Pool(16) as p:
+        PSI = p.starmap(TreePair, [(W, VT, X, Y, l, vt) for l, vt in candidate_pairs])
 
     return max(
         PSI,
@@ -210,7 +216,7 @@ def Best_tree(W, VT, X, Y) -> EventNode:
 
 
 def main():
-    df = parse_dataset(DATASET_PATH)
+    df = parse_dataset(DATASET_PATH, max_items=100, gen_tuple=class_value)
     train = df.sample(frac=0.8)
     test = df.drop(train.index)
 
@@ -234,8 +240,12 @@ def main():
     for i, row in test.iterrows():
         x = row["s"]
         y = row["y"]
-        p = predict(tree, x)
+        p = predict(tree, (0, x))
         print(f"Predicted {p}, expected {y}")
         if p == y:
             correct += 1
     print(f"Accuracy: {correct / len(test)}")
+
+
+if __name__ == "__main__":
+    main()

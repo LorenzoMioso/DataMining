@@ -201,8 +201,13 @@ def Best_tree(W, VT, X, Y) -> EventNode:
             if (si[1], si[0] - vt) not in candidate_pairs:
                 candidate_pairs.append((si[1], si[0] - vt))
 
+    # sort the candidate pairs by incresing order of the second element.
+    # The intention is to reduce the consumption of the sequences
+    candidate_pairs = sorted(candidate_pairs, key=lambda x: x[1])
+
     # PSI = [TreePair(W, VT, X, Y, l, vt) for l, vt in candidate_pairs]
 
+    # run TreePair in parallel
     PSI = []
     with Pool(16) as p:
         PSI = p.starmap(TreePair, [(W, VT, X, Y, l, vt) for l, vt in candidate_pairs])
@@ -210,13 +215,13 @@ def Best_tree(W, VT, X, Y) -> EventNode:
     return max(
         PSI,
         key=lambda psi: sum(
-            [w * (predict(psi, (VT[i], X[i])) - Y[i]) for i, w in enumerate(W)]
+            [w * (predict(psi, (VT[i], X[i])) * Y[i]) for i, w in enumerate(W)]
         ),
     )
 
 
 def main():
-    df = parse_dataset(DATASET_PATH, max_items=100, gen_tuple=class_value)
+    df = parse_dataset(DATASET_PATH, max_items=100, gen_tuple=count_labels)
     train = df.sample(frac=0.8)
     test = df.drop(train.index)
 
@@ -227,9 +232,9 @@ def main():
     l = "7"
     d = 18
 
-    # tree_pair = TreePair(W, VT, X, Y, l, d)
+    # tree = TreePair(W, VT, X, Y, l, d)
     # print("Tree pair")
-    # print_tree(tree_pair)
+    # print_tree(tree)
 
     tree = Best_tree(W, VT, X, Y)
     print("Best tree")

@@ -8,10 +8,10 @@ from util import *
 
 # DATASET_PATH = "../datasets/activity.txt"  # 35 lines
 # DATASET_PATH = "../datasets/question.txt"  # 1730 lines
-DATASET_PATH = "../datasets/epitope.txt"  # 2392 lines
+# DATASET_PATH = "../datasets/epitope.txt"  # 2392 lines
 # DATASET_PATH = "../datasets/gene.txt"  # 2942 lines
-# DATASET_PATH = "../datasets/robot.txt" # 4302 lines
-ITERATIONS = 30
+DATASET_PATH = "../datasets/robot.txt"  # 4302 lines
+ITERATIONS = 15
 
 
 def fix_after_consume(X, W, Y):
@@ -55,25 +55,9 @@ def ada_boost(X_0: list, Y: list, iterations: int):
         if n == 0:
             print("no more sequences")
             break
-        # print(f"n = {n}")
-        # print(f"Z[{t}] = {Z[t]}")
-        # print(f"W[{t}] = {W[t]}")
-        # print(f"sum(W[{t}]) = {sum(W[t])}")
-        # train a weak learner
+
+        # find the best weak hypothesis
         PSI.append(Best_tree(W[t], Z[t][0][0], Z[t][0][1], Z[t][1]))
-        # print_tree(PSI[t])
-        # for i in range(n):
-        #    print(
-        #        f"(w = {W[t][i]}, y = {Y[i]}, prediction = {predict(PSI[t], (X[t][0][i], X[t][1][i]))}, vt = {X[t][0][i]}, s_x = {X[t][1][i]})"
-        #    )
-        # for i in range(n):
-        #    print(
-        #        f"predict(PSI[{t}], X[{t}][1][{i}]) = {predict(PSI[t], (X[t][0][i],  X[t][1][i]))}, with weight {round(W[t][i],3)}, prediction is correct = {predict(PSI[t],  (X[t][0][i],  X[t][1][i])) == Y[i]}"
-        #    )
-        # percentage of correct predictions
-        # print(
-        #    f"percentage of correct predictions = {sum([1 for i in range(n) if predict(PSI[t], (X[t][0][i],  X[t][1][i])) == Y[i]]) / n}"
-        # )
 
         # get the weak hypothesis error
         e.append(
@@ -85,7 +69,7 @@ def ada_boost(X_0: list, Y: list, iterations: int):
                 ]
             )
         )
-        # print(f"e[{t}] = {e[t]}")
+        print(f"e[{t}] = {e[t]}")
         # choose the weak hypothesis weight
         if e[t] == 0:  # there could be no classification error
             a.append(0.5)
@@ -128,6 +112,8 @@ def ada_boost(X_0: list, Y: list, iterations: int):
         #        )
 
         # update the weights (from paper)
+        # updating the weights with this formula works better than the one from the exercise,
+        # Noting that at increasing the number of iterations, the prediction accuracy starts to oscillate oround some value
         for j in range(n):
             W[t + 1][j] = W[t][j] * np.exp(
                 -a[t] * Y[j] * predict(PSI[t], (X[t][0][j], X[t][1][j]))
@@ -153,40 +139,36 @@ def ada_boost(X_0: list, Y: list, iterations: int):
 
 
 def predict_boost(PSI, a, x, y):
-    # print(f"call to predictBoost with PSI = {PSI}, a = {a}, x = {x}, y = {y}")
-    # return y * sum([a[i] * predict(PSI[i], x) for i in range(len(PSI))]) / sum(a)
-    # return sum([a[i] * predict(PSI[i], x) for i in range(len(PSI))])
-
     # prediction without consumption
-    res = 0
-    i = 0
-    pred = 0
-    while True:
-        pred = predict(PSI[i], (0, x))
-        res += a[i] * pred
-        # print(f"pred = {pred}, a = {a[i]}, res = {res}, where y = {y}, x = {x}")
-        i += 1
-        if i >= len(PSI):
-            # print(f"weighted prediction = {res}")
-            break
-    print(f"weighted prediction = {res}")
-    return res
-
-    # prediction with consumption
     # res = 0
     # i = 0
-    # vt = 0
     # pred = 0
     # while True:
-    #    pred = predict(PSI[i], (vt, x))
+    #    pred = predict(PSI[i], (0, x))
     #    res += a[i] * pred
-    #    # print(f"pred = {pred}, a = {a[i]}, res = {res}, where y = {y}, x = {x}")
-    #    vt, x = consume(PSI[i], (vt, x))
+    #    print(f"pred = {pred}, a = {a[i]}, res = {res}, where y = {y}, x = {x}")
     #    i += 1
-    #    if len(x) == 0 or i >= len(PSI):
+    #    if i >= len(PSI):
     #        # print(f"weighted prediction = {res}")
     #        break
+    ## print(f"weighted prediction = {res}")
     # return res
+
+    # prediction with consumption
+    res = 0
+    i = 0
+    vt = 0
+    pred = 0
+    while True:
+        pred = predict(PSI[i], (vt, x))
+        res += a[i] * pred
+        # print(f"pred = {pred}, a = {a[i]}, res = {res}, where y = {y}, x = {x}")
+        vt, x = consume(PSI[i], (vt, x))
+        i += 1
+        if len(x) == 0 or i >= len(PSI):
+            # print(f"weighted prediction = {res}")
+            break
+    return res
 
 
 def plot_iterations_accuracy(df, iterations):
@@ -198,24 +180,21 @@ def plot_iterations_accuracy(df, iterations):
     X = train["s"].tolist()
     Y = train["y"].tolist()
 
+    # train a boosting classifier with a given number of iterations
+    t, a = ada_boost(X, Y, iterations)
+
     accuracy = []
     for i in range(1, iterations + 1):
-        t, a = ada_boost(X, Y, i)
+        test_X = test["s"].tolist()
+        test_Y = test["y"].tolist()
         predictions = [
-            predict_boost(t, a, x, y)
-            for x, y in zip(test["s"].tolist(), test["y"].tolist())
+            predict_boost(t[:i], a[:i], x, y) for x, y in zip(test_X, test_Y)
         ]
         accuracy.append(
-            sum(
-                [
-                    1
-                    for i in range(len(test["y"].tolist()))
-                    if predictions[i] * test["y"].tolist()[i] > 0
-                ]
-            )
-            / len(test["y"].tolist())
+            sum([1 for i in range(len(test_Y)) if predictions[i] * test_Y[i] > 0])
+            / len(test_Y)
         )
-        print(f"Accuracy after {i} iterations = {accuracy[-1]}")
+        print(f"Accuracy = {accuracy[-1]}")
 
     plt.plot(range(1, iterations + 1), accuracy)
     plt.xlabel("Iterations")
@@ -257,8 +236,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
-
-# TODO :
-# - try on other datasets
-# - compute differently the v in s

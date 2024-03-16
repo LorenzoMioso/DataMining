@@ -62,42 +62,42 @@ def is_valid_weak_learner(dataset_path, parse_dataset_func=count_labels):
 
 
 def try_different_parse_dataset(dataset_path):
-    # print("---------------------------")
-    # print("count_labels parse_dataset")
-    # print("---------------------------")
-    # is_valid_weak_learner(dataset_path, count_labels)
-    # print("---------------------------")
-    # print("progressive_count_labels parse_dataset")
-    # print("---------------------------")
-    # is_valid_weak_learner(dataset_path, progressive_count_labels)
-    # print("---------------------------")
-    # print("constant_value parse_dataset")
-    # print("---------------------------")
-    # is_valid_weak_learner(dataset_path, constant_value)
-    # print("---------------------------")
-    # print("class_value parse_dataset")
-    # print("---------------------------")
-    # is_valid_weak_learner(dataset_path, class_value)
-    # print("---------------------------")
-    # print("index_tuple parse_dataset")
-    # print("---------------------------")
-    # is_valid_weak_learner(dataset_path, index_tuple)
-    # print("---------------------------")
-    # print("frequency_ratio parse_dataset")
-    # print("---------------------------")
-    # is_valid_weak_learner(dataset_path, frequency_ratio)
-    # print("---------------------------")
-    # print("unique_label_count parse_dataset")
-    # print("---------------------------")
-    # is_valid_weak_learner(dataset_path, unique_label_count)
-    # print("---------------------------")
-    # print("equals_next parse_dataset")
-    # print("---------------------------")
-    # is_valid_weak_learner(dataset_path, equals_next)
-    # print("---------------------------")
-    # print("equals_previous parse_dataset")
-    # print("---------------------------")
-    # is_valid_weak_learner(dataset_path, equals_previous)
+    print("---------------------------")
+    print("count_labels parse_dataset")
+    print("---------------------------")
+    is_valid_weak_learner(dataset_path, count_labels)
+    print("---------------------------")
+    print("progressive_count_labels parse_dataset")
+    print("---------------------------")
+    is_valid_weak_learner(dataset_path, progressive_count_labels)
+    print("---------------------------")
+    print("constant_value parse_dataset")
+    print("---------------------------")
+    is_valid_weak_learner(dataset_path, constant_value)
+    print("---------------------------")
+    print("class_value parse_dataset")
+    print("---------------------------")
+    is_valid_weak_learner(dataset_path, class_value)
+    print("---------------------------")
+    print("index_tuple parse_dataset")
+    print("---------------------------")
+    is_valid_weak_learner(dataset_path, index_tuple)
+    print("---------------------------")
+    print("frequency_ratio parse_dataset")
+    print("---------------------------")
+    is_valid_weak_learner(dataset_path, frequency_ratio)
+    print("---------------------------")
+    print("unique_label_count parse_dataset")
+    print("---------------------------")
+    is_valid_weak_learner(dataset_path, unique_label_count)
+    print("---------------------------")
+    print("equals_next parse_dataset")
+    print("---------------------------")
+    is_valid_weak_learner(dataset_path, equals_next)
+    print("---------------------------")
+    print("equals_previous parse_dataset")
+    print("---------------------------")
+    is_valid_weak_learner(dataset_path, equals_previous)
     print("---------------------------")
     print("tf_idf parse_dataset")
     print("---------------------------")
@@ -106,11 +106,11 @@ def try_different_parse_dataset(dataset_path):
 
 if __name__ == "__main__":
     datasets = [
-        # "../datasets/activity.txt",
-        # "../datasets/question.txt",
-        # "../datasets/epitope.txt",
+        "../datasets/activity.txt",
+        "../datasets/question.txt",
+        "../datasets/epitope.txt",
         "../datasets/gene.txt",
-        # "../datasets/robot.txt",
+        "../datasets/robot.txt",
     ]
     for dataset in datasets:
         print(f"############################################")

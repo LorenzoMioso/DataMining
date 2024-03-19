@@ -205,12 +205,12 @@ def Best_tree(W, VT, X, Y) -> EventNode:
     # The intention is to reduce the consumption of the sequences
     candidate_pairs = sorted(candidate_pairs, key=lambda x: x[1])
 
-    # PSI = [TreePair(W, VT, X, Y, l, vt) for l, vt in candidate_pairs]
+    PSI = [TreePair(W, VT, X, Y, l, vt) for l, vt in candidate_pairs]
 
     # run TreePair in parallel
-    PSI = []
-    with Pool(16) as p:
-        PSI = p.starmap(TreePair, [(W, VT, X, Y, l, vt) for l, vt in candidate_pairs])
+    # PSI = []
+    # with Pool(16) as p:
+    #    PSI = p.starmap(TreePair, [(W, VT, X, Y, l, vt) for l, vt in candidate_pairs])
 
     return max(
         PSI,

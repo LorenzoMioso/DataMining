@@ -38,7 +38,7 @@ def create_and_test_best_tree(dataset_path, parse_dataset_func=count_labels):
 
 def is_valid_weak_learner(dataset_path, parse_dataset_func=count_labels):
     accuracies = []
-    count_accurancy_50 = 0
+    count_accuracy_50 = 0
 
     input_func = [(dataset_path, parse_dataset_func) for _ in range(TRAIN_TEST_CYCLES)]
 
@@ -52,11 +52,11 @@ def is_valid_weak_learner(dataset_path, parse_dataset_func=count_labels):
 
     for acc in accuracies:
         if acc > 0.5:
-            count_accurancy_50 += 1
+            count_accuracy_50 += 1
 
     print(f"Mean accuracy: {np.mean(accuracies)}")
     print(
-        f"Percentage of times with accuracy over 50%: {count_accurancy_50 / TRAIN_TEST_CYCLES}"
+        f"Percentage of times with accuracy over 50%: {count_accuracy_50 / TRAIN_TEST_CYCLES}"
     )
     print(f"Standard deviation: {np.std(accuracies)}")
 

@@ -1,17 +1,14 @@
-from math import log2
-
 import matplotlib.pyplot as plt
 import numpy as np
-import pandas as pd
 from tree import *
 from util import *
 
-# DATASET_PATH = "../datasets/activity.txt"  # 35 lines
+DATASET_PATH = "../datasets/activity.txt"  # 35 lines
 # DATASET_PATH = "../datasets/question.txt"  # 1730 lines
-# DATASET_PATH = "../datasets/epitope.txt"  # 2392 lines
+DATASET_PATH = "../datasets/epitope.txt"  # 2392 lines
 # DATASET_PATH = "../datasets/gene.txt"  # 2942 lines
-DATASET_PATH = "../datasets/robot.txt"  # 4302 lines
-ITERATIONS = 15
+# DATASET_PATH = "../datasets/robot.txt"  # 4302 lines
+ITERATIONS = 30
 
 
 def fix_after_consume(X, W, Y):
@@ -57,7 +54,15 @@ def ada_boost(X_0: list, Y: list, iterations: int):
             break
 
         # find the best weak hypothesis
-        PSI.append(Best_tree(W[t], Z[t][0][0], Z[t][0][1], Z[t][1]))
+        PSI.append(Best_tree(W[t], Z[t][0][0], Z[t][0][1], Z[t][1], run_parallel=True))
+        print(f"PSI[{t}] :")
+        print_tree(PSI[t])
+
+        # print all rows with the predicted values and the real values
+        # for i in range(n):
+        #    print(
+        #        f"prediction = {predict(PSI[t], (X[t][0][i], X[t][1][i]))}, real value = {Y[i]}"
+        #    )
 
         # get the weak hypothesis error
         e.append(
@@ -72,7 +77,9 @@ def ada_boost(X_0: list, Y: list, iterations: int):
         print(f"e[{t}] = {e[t]}")
         # choose the weak hypothesis weight
         if e[t] == 0:  # there could be no classification error
-            a.append(0.5)
+            a.append(math.inf)
+            print(f"a[{t}] = {a[t]}")
+            print("interrupted because of 0 error")
             break
         else:
             a.append(0.5 * np.log((1 - e[t]) / e[t]))
@@ -80,6 +87,7 @@ def ada_boost(X_0: list, Y: list, iterations: int):
 
         # print(f"################# end of iteration {t} #################")
         if t >= iterations - 1:
+            print("interrupted because of max iterations")
             break
         # print(f"t = {t}")
 
@@ -114,13 +122,14 @@ def ada_boost(X_0: list, Y: list, iterations: int):
         # update the weights (from paper)
         # updating the weights with this formula works better than the one from the exercise,
         # Noting that at increasing the number of iterations, the prediction accuracy starts to oscillate oround some value
+        # In "robot" dataset, using this formula, the accuracy is around 0.8, while using the formula from the exercise, the accuracy is around 0.6
         for j in range(n):
             W[t + 1][j] = W[t][j] * np.exp(
                 -a[t] * Y[j] * predict(PSI[t], (X[t][0][j], X[t][1][j]))
             )
         W[t + 1] = [w / sum(W[t + 1]) for w in W[t + 1]]
 
-        # print(f"W[{t + 1}] = {W[t + 1]}")
+        print(f"W[{t + 1}] = {W[t + 1]}")
 
         # update dataset
         X.append(list(zip(*[consume(PSI[t], x) for x in zip(X[t][0], X[t][1])])))
@@ -139,6 +148,7 @@ def ada_boost(X_0: list, Y: list, iterations: int):
 
 
 def predict_boost(PSI, a, x, y):
+    print(f"predict_boost with {len(PSI)} weak hypotheses")
     # prediction without consumption
     # res = 0
     # i = 0
@@ -146,7 +156,7 @@ def predict_boost(PSI, a, x, y):
     # while True:
     #    pred = predict(PSI[i], (0, x))
     #    res += a[i] * pred
-    #    print(f"pred = {pred}, a = {a[i]}, res = {res}, where y = {y}, x = {x}")
+    #    # print(f"pred = {pred}, a = {a[i]}, res = {res}, where y = {y}, x = {x}")
     #    i += 1
     #    if i >= len(PSI):
     #        # print(f"weighted prediction = {res}")
@@ -184,19 +194,22 @@ def plot_iterations_accuracy(df, iterations):
     t, a = ada_boost(X, Y, iterations)
 
     accuracy = []
-    for i in range(1, iterations + 1):
+    for i in range(1, len(t) + 1):
         test_X = test["s"].tolist()
         test_Y = test["y"].tolist()
+        print(f"iteration = {i}")
+        print(f"text_y = {test_Y}")
         predictions = [
             predict_boost(t[:i], a[:i], x, y) for x, y in zip(test_X, test_Y)
         ]
+        print(f"predictions = {predictions}")
         accuracy.append(
             sum([1 for i in range(len(test_Y)) if predictions[i] * test_Y[i] > 0])
             / len(test_Y)
         )
         print(f"Accuracy = {accuracy[-1]}")
 
-    plt.plot(range(1, iterations + 1), accuracy)
+    plt.plot(range(1, len(t) + 1), accuracy)
     plt.xlabel("Iterations")
     plt.ylabel("Accuracy")
     plt.show()

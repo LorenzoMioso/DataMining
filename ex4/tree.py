@@ -188,7 +188,7 @@ def consume(PSI, x):
         return (vt, s_x)
 
 
-def Best_tree(W, VT, X, Y) -> EventNode:
+def Best_tree(W, VT, X, Y, run_parallel=False) -> EventNode:
     assert (
         len(W) == len(VT) == len(X) == len(Y)
     ), f"Input data must have the same lenght, lengths are {len(W)}, {len(VT)}, {len(X)}, {len(Y)}"
@@ -205,12 +205,15 @@ def Best_tree(W, VT, X, Y) -> EventNode:
     # The intention is to reduce the consumption of the sequences
     candidate_pairs = sorted(candidate_pairs, key=lambda x: x[1])
 
-    PSI = [TreePair(W, VT, X, Y, l, vt) for l, vt in candidate_pairs]
-
+    PSI = []
     # run TreePair in parallel
-    # PSI = []
-    # with Pool(16) as p:
-    #    PSI = p.starmap(TreePair, [(W, VT, X, Y, l, vt) for l, vt in candidate_pairs])
+    if run_parallel:
+        with Pool(16) as p:
+            PSI = p.starmap(
+                TreePair, [(W, VT, X, Y, l, vt) for l, vt in candidate_pairs]
+            )
+    else:
+        PSI = [TreePair(W, VT, X, Y, l, vt) for l, vt in candidate_pairs]
 
     return max(
         PSI,

@@ -113,8 +113,7 @@ if __name__ == "__main__":
         "../datasets/robot.txt",
     ]
     for dataset in datasets:
-        print(f"############################################")
+        print("############################################")
         print(f"Dataset: {dataset}")
-        print(f"############################################")
+        print("############################################")
         try_different_parse_dataset(dataset)
-    # main()

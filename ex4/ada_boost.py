@@ -1,6 +1,10 @@
+import math
+import sys
+
 import numpy as np
-from tree import *
-from util import *
+
+sys.path.append("..")
+from ex4.tree import Best_tree, consume, predict
 
 DATASET_PATH = "../datasets/activity.txt"  # 35 lines
 # DATASET_PATH = "../datasets/question.txt"  # 1730 lines
@@ -119,7 +123,7 @@ def ada_boost(X_0: list, Y: list, iterations: int):
     return PSI, a, e
 
 
-def predict_boost(PSI, a, x, y):
+def predict_boost(PSI, a, x):
     # print(f"predict_boost with {len(PSI)} weak hypotheses")
     # prediction without consumption
     # res = 0
@@ -128,7 +132,6 @@ def predict_boost(PSI, a, x, y):
     # while True:
     #    pred = predict(PSI[i], (0, x))
     #    res += a[i] * pred
-    #    # print(f"pred = {pred}, a = {a[i]}, res = {res}, where y = {y}, x = {x}")
     #    i += 1
     #    if i >= len(PSI):
     #        # print(f"weighted prediction = {res}")
@@ -137,20 +140,39 @@ def predict_boost(PSI, a, x, y):
     # return res
 
     # prediction with consumption
-    res = 0
+    tmp = 0
     i = 0
     vt = 0
     pred = 0
     while True:
         pred = predict(PSI[i], (vt, x))
-        res += a[i] * pred
+        tmp += a[i] * pred
         # print(f"pred = {pred}, a = {a[i]}, res = {res}, where y = {y}, x = {x}")
         vt, x = consume(PSI[i], (vt, x))
         i += 1
         if len(x) == 0 or i >= len(PSI):
             # print(f"weighted prediction = {res}")
             break
-    return res
+    return tmp
+
+
+def prob_boost(PSI, a, x, y):
+    # probability of the sample x to be of class y
+    tmp = 0
+    i = 0
+    vt = 0
+    prob = 0
+    while True:
+        pred = predict(PSI[i], (vt, x))
+        if pred * y > 0:
+            prob += a[i]
+        vt, x = consume(PSI[i], (vt, x))
+        i += 1
+        if len(x) == 0 or i >= len(PSI):
+            break
+    if prob == math.inf and sum(a[:i]) == math.inf:
+        return 1
+    return prob / sum(a[:i])
 
 
 def main():
@@ -165,7 +187,7 @@ def main():
     # test the model
     test_X = test["s"].tolist()
     test_Y = test["y"].tolist()
-    predictions = [predict_boost(t, a, x, y) for x, y in zip(test_X, test_Y)]
+    predictions = [predict_boost(t, a, x) for x, y in zip(test_X, test_Y)]
     for i, p in enumerate(predictions):
         print(f"prediction = {p}, real value = {test_Y[i]}")
 
@@ -175,6 +197,14 @@ def main():
     ) / len(test_Y)
 
     print(f"Accuracy = {accuracy}")
+
+    # probability of the sample x to be of class 1
+    p_plus = [prob_boost(t, a, x, 1) for x in test_X]
+
+    print(f"p_plus = {p_plus}")
+    # probability of the sample x to be of class -1
+    p_minus = [prob_boost(t, a, x, -1) for x in test_X]
+    print(f"p_minus = {p_minus}")
 
 
 if __name__ == "__main__":

@@ -1,1 +1,0 @@
-- check if best tree works with weights

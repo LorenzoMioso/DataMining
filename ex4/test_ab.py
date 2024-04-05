@@ -1,8 +1,10 @@
+import sys
+
 import matplotlib.pyplot as plt
-import numpy as np
-from ada_boost import ada_boost, predict_boost
-from tree import *
-from util import *
+
+sys.path.append("..")
+from ex4.ada_boost import BoostedSeqTree
+from ex4.util import parse_dataset
 
 ITERATIONS = 40
 
@@ -21,16 +23,18 @@ def plot_iterations_accuracy(df, iterations):
     Y = train["y"].tolist()
 
     # train a boosting classifier with a given number of iterations
-    t, a, e = ada_boost(X, Y, iterations)
+    model = BoostedSeqTree()
+    model.fit(X, Y, iterations)
 
     accuracy = []
-    for i in range(1, len(t) + 1):
+    for i in range(1, len(model.trees) + 1):
         test_X = test["s"].tolist()
         test_Y = test["y"].tolist()
         print(f"iteration = {i}")
         print(f"text_y = {test_Y}")
         predictions = [
-            predict_boost(t[:i], a[:i], x, y) for x, y in zip(test_X, test_Y)
+            BoostedSeqTree(model.trees[:i], model.a[:i], model.e[:i]).predict(x)
+            for x, y in zip(test_X, test_Y)
         ]
         print(f"predictions = {predictions}")
         accuracy.append(
@@ -40,9 +44,9 @@ def plot_iterations_accuracy(df, iterations):
         print(f"Accuracy = {accuracy[-1]}")
 
     print(f"accuracy = {accuracy}")
-    plt.plot(range(1, len(t) + 1), accuracy, label="accuracy")
-    plt.plot(range(1, len(t) + 1), a, label="alpha")
-    plt.plot(range(1, len(t) + 1), e, label="error")
+    plt.plot(range(1, len(model.trees) + 1), accuracy, label="accuracy")
+    plt.plot(range(1, len(model.trees) + 1), model.a, label="alpha")
+    plt.plot(range(1, len(model.trees) + 1), model.e, label="error")
     # legend
     plt.legend()
     plt.xlabel("Iterations")

@@ -1,8 +1,23 @@
+import sys
 from multiprocessing import Pool
 
 import numpy as np
-from tree import Best_tree, predict
-from util import *
+
+sys.path.append("..")
+from ex4.tree import Best_tree, predict
+from ex4.util import (
+    class_value,
+    compute_tf_idf_row,
+    constant_value,
+    count_labels,
+    equals_next,
+    equals_previous,
+    frequency_ratio,
+    index_tuple,
+    parse_dataset,
+    progressive_count_labels,
+    unique_label_count,
+)
 
 TRAIN_TEST_CYCLES = 1000
 

@@ -1,9 +1,13 @@
 import math
+import sys
 from multiprocessing import Pool
 from typing import List, Tuple
 
 import numpy as np
-from util import *
+
+from ex4.util import count_labels, parse_dataset
+
+sys.path.append("..")
 
 # DATASET_PATH = "../datasets/activity.txt"  # 35 lines
 DATASET_PATH = "../datasets/question.txt"  # 1730 lines
@@ -41,23 +45,24 @@ class Leaf:
         return f"Leaf({self.y})"
 
 
-def print_tree(root, indent=0, prefix=""):
-    if isinstance(root, EventNode):
-        print("  " * indent + f"EventNode('{root.l}', {root.d})")
-        if root.true_child:
-            print_tree(root.true_child, indent + 1, "T")
-        if root.false_child:
-            print_tree(root.false_child, indent + 1, "F")
-    elif isinstance(root, ValueNode):
-        print("  " * indent + f"-{prefix}: ValueNode({root.v})")
-        if root.true_child:
-            print_tree(root.true_child, indent + 1, "T")
-        if root.false_child:
-            print_tree(root.false_child, indent + 1, "F")
-    elif isinstance(root, Leaf):
-        print("  " * indent + f"-{prefix}: Leaf({root.y})")
-    else:
-        raise ValueError(f"Unknown type {type(root)}")
+class SeqTree:
+    event_node: EventNode
+
+    def __init__(self):
+        pass
+
+    def fit(self, W, VT, X, Y, run_parallel=False):
+        self.event_node = Best_tree(W, VT, X, Y, run_parallel=run_parallel)
+        return self
+
+    def predict(self, x):
+        return predict(self.event_node, x)
+
+    def consume(self, x):
+        return consume(self.event_node, x)
+
+    def print(self):
+        print_tree(self.event_node)
 
 
 def exist_event(s, vt, l, d):
@@ -173,7 +178,7 @@ def predict(PSI, x):
     return PSI.y
 
 
-def consume(PSI, x):
+def consume(PSI, x) -> Tuple[int, List[Tuple[int, str, int]]]:
     # x = (vt, s_x) , vt belongs to R^(>=0), s_x belongs to s_x belongs to (R^+ x L, x R)^*
     assert isinstance(PSI, EventNode)
     vt, s_x = x
@@ -253,6 +258,25 @@ def main():
         if p == y:
             correct += 1
     print(f"Accuracy: {correct / len(test)}")
+
+
+def print_tree(root, indent=0, prefix=""):
+    if isinstance(root, EventNode):
+        print("  " * indent + f"EventNode('{root.l}', {root.d})")
+        if root.true_child:
+            print_tree(root.true_child, indent + 1, "T")
+        if root.false_child:
+            print_tree(root.false_child, indent + 1, "F")
+    elif isinstance(root, ValueNode):
+        print("  " * indent + f"-{prefix}: ValueNode({root.v})")
+        if root.true_child:
+            print_tree(root.true_child, indent + 1, "T")
+        if root.false_child:
+            print_tree(root.false_child, indent + 1, "F")
+    elif isinstance(root, Leaf):
+        print("  " * indent + f"-{prefix}: Leaf({root.y})")
+    else:
+        raise ValueError(f"Unknown type {type(root)}")
 
 
 if __name__ == "__main__":

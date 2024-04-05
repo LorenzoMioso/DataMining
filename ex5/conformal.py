@@ -3,8 +3,11 @@ import sys
 sys.path.append("..")
 
 import numpy as np
+from nonconformist.base import ClassifierAdapter
+from nonconformist.cp import IcpClassifier
+from nonconformist.nc import ClassifierNc, NcFactory
 
-from ex4 import ada_boost as ab
+from ex4.ada_boost import BoostedSeqTree
 from ex5.util import parse_dataset
 
 DATASET_PATH = "../datasets/pioneer.txt"  ## 160 lines
@@ -19,32 +22,56 @@ DATASET_PATH = "../datasets/pioneer.txt"  ## 160 lines
 ITERATIONS = 50
 
 
-def build_conformal_classifier(X, Y):
-    pass
+class MyClassifierAdapter(ClassifierAdapter):
+    def __init__(self, model: BoostedSeqTree, fit_params=None):
+        super(MyClassifierAdapter, self).__init__(model, fit_params)
+
+    def fit(self, X, Y):
+        self.model.fit(X, Y, ITERATIONS)
+
+    def predict(self, X):
+        return self.model.predict_prob(X, 1)
 
 
 def main():
     df = parse_dataset(DATASET_PATH)
+    # divide training and test sets
+    df_train = df.sample(frac=0.8)
+    df_test = df.drop(df_train.index)
 
     classes = df["y"].unique()
 
     for c in classes:
         print(f"Class: {c}")
-        df["y"].apply(lambda x: 1 if x == c else 0, inplace=True)
+        df_train["y"].apply(lambda x: 1 if x == c else 0, inplace=True)
 
-        print(df.head())
+        print(df_train.head())
 
         # split the dataset into train and calibration sets
-        train = df.sample(frac=0.8)
-        calibrate = df.drop(train.index)
+        df_t = df_train.sample(frac=0.8)
+        df_c = df_train.drop(df_t.index)
 
-        X = train["s"].tolist()
-        Y = train["y"].tolist()
+        # make sure that in the calibration set there are both positive and negative examples
+        while df_c["y"].nunique() < 2:
+            print("Resampling calibration set")
+            df_t = df_train.sample(frac=0.8)
+            df_c = df_train.drop(df_t.index)
+
+        X = df_t["s"].tolist()
+        Y = df_t["y"].tolist()
 
         # train the model
-        t, a, _ = ab.ada_boost(X, Y, ITERATIONS)
+        bst = BoostedSeqTree().fit(X, Y, ITERATIONS)
 
         # calibrate the model
+        model = MyClassifierAdapter(bst)
+        nc = ClassifierNc(model)
+        icp = IcpClassifier(nc)
+
+        X_c = df_c["s"].tolist()
+        Y_c = df_c["y"].tolist()
+
+        icp.fit(X_c, Y_c)
 
 
 if __name__ == "__main__":

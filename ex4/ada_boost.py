@@ -77,41 +77,41 @@ class BoostedSeqTree:
 
             W.append([0.0] * n)
             # update the weights (from exercise)
-            for j in range(n):
-                if Y[j] * PSI[t].predict((X[t][0][j], X[t][1][j])) >= 0:
-                    W[t + 1][j] = (
-                        0.5
-                        * W[t][j]
-                        / sum(
-                            [
-                                W[t][i]
-                                for i in range(n)
-                                if PSI[t].predict((X[t][0][j], X[t][1][j])) * Y[i] >= 0
-                            ]
-                        )
-                    )
-                else:
-                    W[t + 1][j] = (
-                        0.5
-                        * W[t][j]
-                        / sum(
-                            [
-                                W[t][i]
-                                for i in range(n)
-                                if PSI[t].predict((X[t][0][j], X[t][1][j])) * Y[i] <= 0
-                            ]
-                        )
-                    )
+            # for j in range(n):
+            #    if Y[j] * PSI[t].predict((X[t][0][j], X[t][1][j])) >= 0:
+            #        W[t + 1][j] = (
+            #            0.5
+            #            * W[t][j]
+            #            / sum(
+            #                [
+            #                    W[t][i]
+            #                    for i in range(n)
+            #                    if PSI[t].predict((X[t][0][j], X[t][1][j])) * Y[i] >= 0
+            #                ]
+            #            )
+            #        )
+            #    else:
+            #        W[t + 1][j] = (
+            #            0.5
+            #            * W[t][j]
+            #            / sum(
+            #                [
+            #                    W[t][i]
+            #                    for i in range(n)
+            #                    if PSI[t].predict((X[t][0][j], X[t][1][j])) * Y[i] <= 0
+            #                ]
+            #            )
+            #        )
 
             # update the weights (from paper)
             # updating the weights with this formula works better than the one from the exercise,
             # Noting that at increasing the number of iterations, the prediction accuracy starts to oscillate oround some value
             # In "robot" dataset, using this formula, the accuracy is around 0.8, while using the formula from the exercise, the accuracy is around 0.6
-            # for j in range(n):
-            #    W[t + 1][j] = W[t][j] * np.exp(
-            #        -a[t] * Y[j] * predict(PSI[t], (X[t][0][j], X[t][1][j]))
-            #    )
-            # W[t + 1] = [w / sum(W[t + 1]) for w in W[t + 1]]
+            for j in range(n):
+                W[t + 1][j] = W[t][j] * np.exp(
+                    -a[t] * Y[j] * PSI[t].predict((X[t][0][j], X[t][1][j]))
+                )
+            W[t + 1] = [w / sum(W[t + 1]) for w in W[t + 1]]
 
             # update dataset
             X.append(list(zip(*[PSI[t].consume(x) for x in zip(X[t][0], X[t][1])])))

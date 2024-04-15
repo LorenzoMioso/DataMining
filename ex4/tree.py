@@ -164,13 +164,20 @@ def predict(PSI, x):
     assert PSI is not None, "PSI must not be None"
     while not isinstance(PSI, Leaf):
         if isinstance(PSI, EventNode):
-            PSI = (
-                PSI.true_child
-                if any((l == PSI.l and d - vt <= PSI.d) for d, l, v in s_x)
-                else PSI.false_child
-            )
-            if PSI is None:
-                raise ValueError("PSI is None after EventNode")
+            try:
+                PSI = (
+                    PSI.true_child
+                    if any((l == PSI.l and d - vt <= PSI.d) for d, l, v in s_x)
+                    else PSI.false_child
+                )
+                if PSI is None:
+                    raise ValueError("PSI is None after EventNode")
+            except Exception as e:
+                print(f"Error: {e}")
+                print(f"PSI = {PSI}")
+                print(f"x = {x}")
+                print(f"s_x = {s_x}")
+                raise e
         elif isinstance(PSI, ValueNode):
             PSI = PSI.true_child if s_x[0][2] == PSI.v else PSI.false_child
             if PSI is None:

@@ -5,9 +5,9 @@ from typing import List, Tuple
 
 import numpy as np
 
-from ex4.util import count_labels, parse_dataset
-
 sys.path.append("..")
+
+from ex4.util import count_labels, parse_dataset
 
 # DATASET_PATH = "../datasets/activity.txt"  # 35 lines
 DATASET_PATH = "../datasets/question.txt"  # 1730 lines
@@ -97,7 +97,7 @@ def TreePair(W, VT, X, Y, l, d) -> EventNode:
 
     # for each true sequence, save the value of the first tuple in the sequence with label l
     P_t = set(
-        (j, X[j][t][2])
+        (j, X[j][t]["v"])
         for j, t in enumerate([min_label_index(X[j], l) for j in range(n)])
         if j in I_t
     )
@@ -108,7 +108,7 @@ def TreePair(W, VT, X, Y, l, d) -> EventNode:
     # sorted list of unique values in P_t with -inf
     values = set([-math.inf]).union(set([p[1] for p in P_t]))
     values = sorted(list(values))
-    # print("values = ", values)
+    print("values = ", values)
 
     tree.true_child = ValueNode()
     cnode = tree.true_child
@@ -190,12 +190,12 @@ def consume(PSI, x) -> Tuple[int, List[Tuple[int, str, int]]]:
     assert isinstance(PSI, EventNode)
     vt, s_x = x
     i = None
-    for idx, s in enumerate(s_x):
-        if vt - s[0] <= PSI.d and s[1] == PSI.l:
+    for idx, (d, l, _) in enumerate(s_x):
+        if vt - d <= PSI.d and l == PSI.l:
             i = idx
             break
     if i is not None:
-        return (s_x[i][0], s_x[i + 1 :])
+        return (s_x[i]["d"], s_x[i + 1 :])
     else:
         return (vt, s_x)
 

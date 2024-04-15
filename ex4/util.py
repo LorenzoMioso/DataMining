@@ -3,7 +3,11 @@ import os
 import pickle
 from collections import Counter
 
+import numpy as np
 import pandas as pd
+
+# define the datatype of a sequence element
+SEQ_ITEM_TYPE = np.dtype([("d", "int32"), ("l", "U50"), ("v", "float32")])
 
 
 # as v in the tuple is the total count of the labels in the sequence
@@ -102,9 +106,9 @@ def parse_dataset(
     gen_tuple=count_labels,
 ):
 
-    parsed_df = load_parsed_dataset(path, max_items, gen_tuple)
-    if parsed_df is not None:
-        return parsed_df
+    # parsed_df = load_parsed_dataset(path, max_items, gen_tuple)
+    # if parsed_df is not None:
+    #    return parsed_df
 
     items = []
     classes = []
@@ -135,18 +139,30 @@ def parse_dataset(
         case compute_tf_idf_row.__name__:
             res = pd.DataFrame(
                 [
-                    {"s": compute_tf_idf_row(s, labels_count, document_count), "y": y}
+                    {
+                        "s": np.array(
+                            compute_tf_idf_row(s, labels_count, document_count),
+                            dtype=SEQ_ITEM_TYPE,
+                        ),
+                        "y": y,
+                    }
                     for s, y in zip(items, classes)
                 ]
             )
         case class_value.__name__:
             res = pd.DataFrame(
-                [{"s": class_value(s, y), "y": y} for s, y in zip(items, classes)]
+                [
+                    {"s": np.array(class_value(s, y), dtype=SEQ_ITEM_TYPE), "y": y}
+                    for s, y in zip(items, classes)
+                ]
             )
 
         case _:
             res = pd.DataFrame(
-                [{"s": gen_tuple(s), "y": y} for s, y in zip(items, classes)]
+                [
+                    {"s": np.array(gen_tuple(s), dtype=SEQ_ITEM_TYPE), "y": y}
+                    for s, y in zip(items, classes)
+                ]
             )
 
     save_parsed_dataset(res, path, max_items, gen_tuple)

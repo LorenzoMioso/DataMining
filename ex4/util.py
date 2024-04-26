@@ -1,7 +1,12 @@
 import math
 import os
 import pickle
+
+# ignore the warning from numpy
+import warnings
 from collections import Counter
+
+warnings.filterwarnings("ignore")
 
 import numpy as np
 import pandas as pd
@@ -102,8 +107,9 @@ def save_parsed_dataset(data, path, max_items=100, gen_tuple=frequency_ratio):
 
 def parse_dataset(
     path,
-    max_items=10000,  # per class
+    max_items=100,  # per class
     gen_tuple=count_labels,
+    add_padding=True,
 ):
 
     # parsed_df = load_parsed_dataset(path, max_items, gen_tuple)
@@ -165,7 +171,27 @@ def parse_dataset(
                 ]
             )
 
-    save_parsed_dataset(res, path, max_items, gen_tuple)
+    if add_padding:
+        # get max length of the sequences
+        max_len = 0
+        for r in res["s"]:
+            if len(r) > max_len:
+                max_len = len(r)
+
+        # pad the each sequence to reach the max length with (-1, "", 0)
+        for i in range(len(res)):
+            s = res["s"][i]
+            if len(s) < max_len:
+                res["s"][i] = np.concatenate(
+                    (
+                        s,
+                        np.array(
+                            [(-1, "", 0)] * (max_len - len(s)), dtype=SEQ_ITEM_TYPE
+                        ),
+                    )
+                )
+
+    # save_parsed_dataset(res, path, max_items, gen_tuple)
 
     return res
 

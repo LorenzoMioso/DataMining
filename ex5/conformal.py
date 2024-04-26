@@ -29,7 +29,7 @@ class MyClassifierAdapter(ClassifierAdapter):
         super().__init__(model, None)
 
     def fit(self, x, y):
-        self.model.fit(x.tolist(), y.tolist(), ITERATIONS)
+        self.model.fit(x, y, ITERATIONS)
 
     def predict(self, x):
         return np.array(
@@ -37,7 +37,7 @@ class MyClassifierAdapter(ClassifierAdapter):
                 np.array(
                     [self.model.predict_prob(x, 1), self.model.predict_prob(x, -1)]
                 )
-                for x in x.tolist()
+                for x in x
             ]
         )
 
@@ -65,8 +65,8 @@ def main():
             df_t = df_train.sample(frac=0.8)
             df_c = df_train.drop(df_t.index)
 
-        X = df_t["s"].tolist()
-        Y = df_t["y"].tolist()
+        X = df_t["s"].to_numpy()
+        Y = df_t["y"].to_numpy()
 
         # train the model
         bst = BoostedSeqTree()

@@ -4,11 +4,13 @@ import pickle
 import sys
 from collections import Counter
 
+import numpy as np
 import pandas as pd
 
 sys.path.append("..")
 
 from ex4.util import (
+    SEQ_ITEM_TYPE,
     class_value,
     compute_tf_idf_row,
     count_labels,
@@ -56,18 +58,30 @@ def parse_dataset(
         case compute_tf_idf_row.__name__:
             res = pd.DataFrame(
                 [
-                    {"s": compute_tf_idf_row(s, labels_count, document_count), "y": y}
+                    {
+                        "s": np.array(
+                            compute_tf_idf_row(s, labels_count, document_count),
+                            dtype=SEQ_ITEM_TYPE,
+                        ),
+                        "y": y,
+                    }
                     for s, y in zip(items, classes)
                 ]
             )
         case class_value.__name__:
             res = pd.DataFrame(
-                [{"s": class_value(s, y), "y": y} for s, y in zip(items, classes)]
+                [
+                    {"s": np.array(class_value(s, y), dtype=SEQ_ITEM_TYPE), "y": y}
+                    for s, y in zip(items, classes)
+                ]
             )
 
         case _:
             res = pd.DataFrame(
-                [{"s": gen_tuple(s), "y": y} for s, y in zip(items, classes)]
+                [
+                    {"s": np.array(gen_tuple(s), dtype=SEQ_ITEM_TYPE), "y": y}
+                    for s, y in zip(items, classes)
+                ]
             )
 
     save_parsed_dataset(res, path, max_items, gen_tuple)

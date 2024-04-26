@@ -10,7 +10,7 @@ sys.path.append("..")
 from ex4.util import count_labels, parse_dataset
 
 # DATASET_PATH = "../datasets/activity.txt"  # 35 lines
-DATASET_PATH = "../datasets/question.txt"  # 1730 lines
+# DATASET_PATH = "../datasets/question.txt"  # 1730 lines
 # DATASET_PATH = "../datasets/epitope.txt"  # 2392 lines
 # DATASET_PATH = "../datasets/gene.txt"  # 2942 lines
 # DATASET_PATH = "../datasets/robot.txt" # 4302 lines
@@ -82,33 +82,31 @@ def min_label_index(s, l):
 
 
 def TreePair(W, VT, X, Y, l, d) -> EventNode:
-    assert len(W) == len(VT) == len(X) == len(Y), "Input data must have the same lenght"
+    assert len(W) == len(VT) == len(X) == len(Y), "Input data must have the same length"
     n = len(W)
     tree = EventNode(l, d)
-    # indexes of all sequences that satisfy the event condition
-    I_t: set[int] = set([j for j in range(len(W)) if exist_event(X[j], VT[j], l, d)])
-    # indexes of all sequences that do not satisfy the event condition
-    I_f: set[int] = set(range(len(W))).difference(I_t)
+    I_t = set()
+    I_f = set(range(len(W)))
+
+    for j in range(n):
+        if exist_event(X[j], VT[j], l, d):
+            I_t.add(j)
+        else:
+            I_f.discard(j)
 
     # a leaf node with the class that has the most weighted frequency
     tree.false_child = Leaf(
-        max([1, -1], key=lambda y: sum([W[j] for j in I_f if Y[j] == y]))
+        max([1, -1], key=lambda y: np.sum([W[j] for j in I_f if Y[j] == y]))
     )
 
     # for each true sequence, save the value of the first tuple in the sequence with label l
-    P_t = set(
-        (j, X[j][t]["v"])
+    P_t = {
+        j: X[j][t]["v"]
         for j, t in enumerate([min_label_index(X[j], l) for j in range(n)])
         if j in I_t
-    )
+    }
 
-    # P_t should not have None values
-    assert None not in [i for i, _ in P_t], "P_t should not have None values"
-
-    # sorted list of unique values in P_t with -inf
-    values = set([-math.inf]).union(set([p[1] for p in P_t]))
-    values = sorted(list(values))
-    print("values = ", values)
+    values = [-math.inf] + sorted(set(P_t.values()))
 
     tree.true_child = ValueNode()
     cnode = tree.true_child
@@ -116,17 +114,16 @@ def TreePair(W, VT, X, Y, l, d) -> EventNode:
     i = 1
     while True:
         cnode.v = values[i]
-        # print(f"cnode.v = {cnode.v}")
 
         # could be that splitting by value results in a single class
         # true child is a leaf node with the class that has the most weighted frequency
         cnode.true_child = Leaf(
             max(
                 [1, -1],
-                key=lambda y: sum(
+                key=lambda y: np.sum(
                     [
                         W[j]
-                        for j, v in P_t
+                        for j, v in P_t.items()
                         if Y[j] == y and values[i - 1] < v <= values[i]
                     ]
                 ),
@@ -142,10 +139,10 @@ def TreePair(W, VT, X, Y, l, d) -> EventNode:
             cnode.false_child = Leaf(
                 max(
                     [1, -1],
-                    key=lambda y: sum(
+                    key=lambda y: np.sum(
                         [
                             W[j]
-                            for j, v in P_t
+                            for j, v in P_t.items()
                             if Y[j] == y and values[i] < v <= values[i + 1]
                         ]
                     ),
@@ -164,29 +161,17 @@ def predict(PSI, x):
     assert PSI is not None, "PSI must not be None"
     while not isinstance(PSI, Leaf):
         if isinstance(PSI, EventNode):
-            try:
-                PSI = (
-                    PSI.true_child
-                    if any((l == PSI.l and d - vt <= PSI.d) for d, l, v in s_x)
-                    else PSI.false_child
-                )
-                if PSI is None:
-                    raise ValueError("PSI is None after EventNode")
-            except Exception as e:
-                print(f"Error: {e}")
-                print(f"PSI = {PSI}")
-                print(f"x = {x}")
-                print(f"s_x = {s_x}")
-                raise e
+            PSI = (
+                PSI.true_child
+                if any((l == PSI.l and d - vt <= PSI.d) for d, l, v in s_x)
+                else PSI.false_child
+            )
         elif isinstance(PSI, ValueNode):
             PSI = PSI.true_child if s_x[0][2] == PSI.v else PSI.false_child
-            if PSI is None:
-                raise ValueError("PSI is None after ValueNode")
     return PSI.y
 
 
 def consume(PSI, x) -> Tuple[int, List[Tuple[int, str, int]]]:
-    # x = (vt, s_x) , vt belongs to R^(>=0), s_x belongs to s_x belongs to (R^+ x L, x R)^*
     assert isinstance(PSI, EventNode)
     vt, s_x = x
     i = None
@@ -203,10 +188,10 @@ def consume(PSI, x) -> Tuple[int, List[Tuple[int, str, int]]]:
 def Best_tree(W, VT, X, Y, run_parallel=False) -> EventNode:
     assert (
         len(W) == len(VT) == len(X) == len(Y)
-    ), f"Input data must have the same lenght, lengths are {len(W)}, {len(VT)}, {len(X)}, {len(Y)}"
-    candidate_pairs: List[Tuple[str, int]] = []
-    n = len(W)
-    for j in range(n):
+    ), f"Input data must have the same length, lengths are {len(W)}, {len(VT)}, {len(X)}, {len(Y)}"
+    candidate_pairs = []
+
+    for j in range(len(W)):
         s = X[j]
         vt = VT[j]
         for si in s:
@@ -215,10 +200,9 @@ def Best_tree(W, VT, X, Y, run_parallel=False) -> EventNode:
 
     # sort the candidate pairs by incresing order of the second element.
     # The intention is to reduce the consumption of the sequences
-    candidate_pairs = sorted(candidate_pairs, key=lambda x: x[1])
+    candidate_pairs.sort(key=lambda x: x[1])
 
     PSI = []
-    # run TreePair in parallel
     if run_parallel:
         with Pool(16) as p:
             PSI = p.starmap(
@@ -229,7 +213,7 @@ def Best_tree(W, VT, X, Y, run_parallel=False) -> EventNode:
 
     return max(
         PSI,
-        key=lambda psi: sum(
+        key=lambda psi: np.sum(
             [w * (predict(psi, (VT[i], X[i])) * Y[i]) for i, w in enumerate(W)]
         ),
     )

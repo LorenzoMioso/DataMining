@@ -8,8 +8,8 @@ sys.path.append("..")
 from ex4.tree import SeqTree
 from ex4.util import parse_dataset
 
-DATASET_PATH = "../datasets/activity.txt"  # 35 lines
-# DATASET_PATH = "../datasets/question.txt"  # 1730 lines
+# DATASET_PATH = "../datasets/activity.txt"  # 35 lines
+DATASET_PATH = "../datasets/question.txt"  # 1730 lines
 # DATASET_PATH = "../datasets/epitope.txt"  # 2392 lines
 # DATASET_PATH = "../datasets/gene.txt"  # 2942 lines
 # DATASET_PATH = "../datasets/robot.txt"  # 4302 lines
@@ -30,15 +30,10 @@ class BoostedSeqTree:
         self.a = a
         self.e
 
-    def fit(self, X_0: List[Tuple[int, str, float]], Y: List[int], iterations: int):
+    def fit(self, X_0, Y, iterations: int = ITERATIONS):
         t = 0
         n = len(X_0)
-        X: List[Tuple[List[int], List[Tuple[int, str, float]]]] = []
-        Z: List[Tuple[Tuple[List[int], List[Tuple[int, str, float]]], List[int]]] = []
-        W: List[List[float]] = []
-        PSI: List[SeqTree] = []
-        e: List[float] = []
-        a: List[float] = []
+        X, Z, W, PSI, e, a = [], [], [], [], [], []
         X.append(([0] * n, X_0))
         Z.append((X[0], Y))
         W.append([1 / n] * n)
@@ -179,17 +174,17 @@ def main():
     train = df.sample(frac=0.8)
     test = df.drop(train.index)
 
-    X = train["s"].tolist()
-    Y = train["y"].tolist()
+    X = train["s"].to_numpy()
+    Y = train["y"].to_numpy()
     model = BoostedSeqTree()
     model.fit(X, Y, ITERATIONS)
 
     # test the model
-    test_X = test["s"].tolist()
-    test_Y = test["y"].tolist()
+    test_X = test["s"].to_numpy()
+    test_Y = test["y"].to_numpy()
     predictions = [model.predict(x) for x, y in zip(test_X, test_Y)]
-    for i, p in enumerate(predictions):
-        print(f"prediction = {p}, real value = {test_Y[i]}")
+    # for i, p in enumerate(predictions):
+    #    print(f"prediction = {p}, real value = {test_Y[i]}")
 
     ## a prediction is correct if the sign of the prediction is the same as the sign of the real value
     accuracy = sum(
@@ -201,10 +196,10 @@ def main():
     # probability of the sample x to be of class 1
     p_plus = [model.predict_prob(x, 1) for x in test_X]
 
-    print(f"p_plus = {p_plus}")
+    # print(f"p_plus = {p_plus}")
     # probability of the sample x to be of class -1
     p_minus = [model.predict_prob(x, -1) for x in test_X]
-    print(f"p_minus = {p_minus}")
+    # print(f"p_minus = {p_minus}")
 
 
 if __name__ == "__main__":

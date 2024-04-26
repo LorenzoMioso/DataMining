@@ -107,7 +107,7 @@ def save_parsed_dataset(data, path, max_items=100, gen_tuple=frequency_ratio):
 
 def parse_dataset(
     path,
-    max_items=100,  # per class
+    max_items=100000,  # per class
     gen_tuple=count_labels,
     add_padding=True,
 ):

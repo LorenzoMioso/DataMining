@@ -8,8 +8,8 @@ sys.path.append("..")
 from ex4.tree import SeqTree
 from ex4.util import parse_dataset
 
-# DATASET_PATH = "../datasets/activity.txt"  # 35 lines
-DATASET_PATH = "../datasets/question.txt"  # 1730 lines
+DATASET_PATH = "../datasets/activity.txt"  # 35 lines
+# DATASET_PATH = "../datasets/question.txt"  # 1730 lines
 # DATASET_PATH = "../datasets/epitope.txt"  # 2392 lines
 # DATASET_PATH = "../datasets/gene.txt"  # 2942 lines
 # DATASET_PATH = "../datasets/robot.txt"  # 4302 lines

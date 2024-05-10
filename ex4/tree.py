@@ -10,7 +10,7 @@ sys.path.append("..")
 from ex4.util import count_labels, parse_dataset
 
 # DATASET_PATH = "../datasets/activity.txt"  # 35 lines
-# DATASET_PATH = "../datasets/question.txt"  # 1730 lines
+DATASET_PATH = "../datasets/question.txt"  # 1730 lines
 # DATASET_PATH = "../datasets/epitope.txt"  # 2392 lines
 # DATASET_PATH = "../datasets/gene.txt"  # 2942 lines
 # DATASET_PATH = "../datasets/robot.txt" # 4302 lines
@@ -219,38 +219,6 @@ def Best_tree(W, VT, X, Y, run_parallel=False) -> EventNode:
     )
 
 
-def main():
-    df = parse_dataset(DATASET_PATH, max_items=100, gen_tuple=count_labels)
-    train = df.sample(frac=0.8)
-    test = df.drop(train.index)
-
-    W = np.ones(len(train)) / len(train)
-    VT = np.zeros(len(train))
-    X = train["s"].tolist()
-    Y = train["y"].tolist()
-    l = "7"
-    d = 18
-
-    # tree = TreePair(W, VT, X, Y, l, d)
-    # print("Tree pair")
-    # print_tree(tree)
-
-    tree = Best_tree(W, VT, X, Y)
-    print("Best tree")
-    print_tree(tree)
-
-    # test the tree
-    correct = 0
-    for i, row in test.iterrows():
-        x = row["s"]
-        y = row["y"]
-        p = predict(tree, (0, x))
-        print(f"Predicted {p}, expected {y}")
-        if p == y:
-            correct += 1
-    print(f"Accuracy: {correct / len(test)}")
-
-
 def print_tree(root, indent=0, prefix=""):
     if isinstance(root, EventNode):
         print("  " * indent + f"EventNode('{root.l}', {root.d})")
@@ -268,6 +236,38 @@ def print_tree(root, indent=0, prefix=""):
         print("  " * indent + f"-{prefix}: Leaf({root.y})")
     else:
         raise ValueError(f"Unknown type {type(root)}")
+
+
+def main():
+    df = parse_dataset(DATASET_PATH, max_items=10000, gen_tuple=count_labels)
+    train = df.sample(frac=0.8)
+    test = df.drop(train.index)
+
+    W = np.ones(len(train)) / len(train)
+    VT = np.zeros(len(train))
+    X = train["s"].to_numpy()
+    Y = train["y"].to_numpy()
+    l = "5"
+    d = 28
+
+    tree = TreePair(W, VT, X, Y, l, d)
+    print("Tree pair")
+    print_tree(tree)
+
+    # tree = Best_tree(W, VT, X, Y)
+    # print("Best tree")
+    # print_tree(tree)
+
+    # test the tree
+    correct = 0
+    for i, row in test.iterrows():
+        x = row["s"]
+        y = row["y"]
+        p = predict(tree, (0, x))
+        # print(f"Predicted {p}, expected {y}")
+        if p == y:
+            correct += 1
+    print(f"Accuracy: {correct / len(test)}")
 
 
 if __name__ == "__main__":

@@ -139,7 +139,15 @@ def parse_dataset(
                         labels_count[label] = 0
                     labels_count[label] += 1
 
-    res = None
+    # if add_padding:
+    #    # add padding to the sequences
+    #    max_len = max([len(s) for s in items])
+    #    labels_count["<PAD>"] = 0
+    #    for idx, item in enumerate(items):
+    #        items[idx] = item + ["<PAD>"] * (max_len - len(item))
+    #        labels_count["<PAD>"] += max_len - len(item)
+
+    # res = None
 
     match gen_tuple.__name__:
         case compute_tf_idf_row.__name__:
@@ -194,22 +202,3 @@ def parse_dataset(
     # save_parsed_dataset(res, path, max_items, gen_tuple)
 
     return res
-
-
-# data = parse_dataset("../datasets/activity.txt", 10, count_labels)
-# data = parse_dataset("../datasets/activity.txt", 10, progressive_count_labels)
-# data = parse_dataset("../datasets/activity.txt", 10, constant_value)
-# data = parse_dataset("../datasets/activity.txt", 10, class_value)
-# data = parse_dataset("../datasets/activity.txt", 10, index_tuple)
-# data = parse_dataset("../datasets/activity.txt", 10, frequency_ratio)
-# data = parse_dataset("../datasets/activity.txt", 10, unique_label_count)
-# data = parse_dataset("../datasets/activity.txt", 10, equals_next)
-# data = parse_dataset("../datasets/activity.txt", 10, equals_previous)
-# data = parse_dataset("../datasets/activity.txt", 10, compute_tf_idf_row)
-# data = parse_dataset("../datasets/gene.txt", 100000, compute_tf_idf_row)
-# data = parse_dataset("../datasets/robot.txt", 100000, compute_tf_idf_row)
-# data = parse_dataset("../datasets/epitope.txt", 100000, compute_tf_idf_row)
-# for i in range(len(data)):
-#    print(data["s"][i])
-#    print(data["y"][i])
-#    print("--------------------")

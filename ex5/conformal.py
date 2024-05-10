@@ -53,6 +53,10 @@ def main():
     X_test = df_test["s"].to_numpy()
     Y_test = df_test["y"].to_numpy()
 
+    r = []
+
+    print("classes:", classes)
+
     for c in classes:
         df_train["y"] = df_train["y"].apply(lambda x: 1 if x == c else 0)
 
@@ -65,29 +69,33 @@ def main():
             df_t = df_train.sample(frac=0.8)
             df_c = df_train.drop(df_t.index)
 
-        X = df_t["s"].to_numpy()
-        Y = df_t["y"].to_numpy()
+        X = np.array([np.array([x for x in s]) for s in df_t["s"]])
+        Y = np.array(df_t["y"])
 
         # train the model
+        print(f"Training model for class {c}")
         bst = BoostedSeqTree()
         model = MyClassifierAdapter(bst)
         nc = ClassifierNc(model)
         icp = IcpClassifier(nc)
 
-        X_c = df_c["s"].to_numpy()
-        Y_c = df_c["y"].to_numpy()
+        X_c = np.array([np.array([x for x in s]) for s in df_c["s"]])
+        Y_c = np.array(df_c["y"])
 
+        print("call fit")
         icp.fit(X_c, Y_c)
 
         print(f"Calibrating model for class {c}")
         icp.calibrate(X_c, Y_c)
         PHI.append(icp)
 
-        regions = icp.predict(X_test, significance=SIGNIFICANCE)
+        print("Predicting region")
+        test_data = np.array([np.array([x for x in s]) for s in X_test])
+        regions = icp.predict(test_data, significance=SIGNIFICANCE)
 
         print("Regions: ", regions)
 
-        break
+        r.append(regions)
 
 
 if __name__ == "__main__":

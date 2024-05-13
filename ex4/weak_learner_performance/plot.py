@@ -1,6 +1,5 @@
 import matplotlib.pyplot as plt
 import numpy as np
-import pandas as pd
 
 # data = pd.read_csv("weak_learner_perf.csv")
 # data = pd.read_csv("10_full.csv")

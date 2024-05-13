@@ -5,7 +5,6 @@ import sys
 from collections import Counter
 
 import numpy as np
-import pandas as pd
 
 sys.path.append("..")
 
@@ -57,53 +56,56 @@ def parse_dataset(
 
     match gen_tuple.__name__:
         case compute_tf_idf_row.__name__:
-            res = pd.DataFrame(
+            res = np.array(
                 [
-                    {
-                        "s": np.array(
-                            compute_tf_idf_row(s, labels_count, document_count),
+                    [
+                        np.array(
+                            gen_tuple(s, labels_count, document_count),
                             dtype=SEQ_ITEM_TYPE,
                         ),
-                        "y": y,
-                    }
+                        y,
+                    ]
                     for s, y in zip(items, classes)
-                ]
+                ],
+                dtype=object,
             )
         case class_value.__name__:
-            res = pd.DataFrame(
+            res = np.array(
                 [
-                    {"s": np.array(class_value(s, y), dtype=SEQ_ITEM_TYPE), "y": y}
+                    [np.array(class_value(s, y), dtype=SEQ_ITEM_TYPE), y]
                     for s, y in zip(items, classes)
-                ]
+                ],
+                dtype=object,
             )
 
         case _:
-            res = pd.DataFrame(
+            res = np.array(
                 [
-                    {"s": np.array(gen_tuple(s), dtype=SEQ_ITEM_TYPE), "y": y}
+                    [np.array(gen_tuple(s), dtype=SEQ_ITEM_TYPE), y]
                     for s, y in zip(items, classes)
-                ]
+                ],
+                dtype=object,
             )
 
     if add_padding:
         # get max length of the sequences
         max_len = 0
-        for r in res["s"]:
-            if len(r) > max_len:
-                max_len = len(r)
-
+        for s, _ in res:
+            max_len = max(max_len, len(s))
         # pad the each sequence to reach the max length with (-1, "", 0)
-        for i in range(len(res)):
-            s = res["s"][i]
-            if len(s) < max_len:
-                res["s"][i] = np.concatenate(
-                    (
-                        s,
-                        np.array(
-                            [(-1, "", 0)] * (max_len - len(s)), dtype=SEQ_ITEM_TYPE
-                        ),
-                    )
-                )
+        res = np.array(
+            [
+                [
+                    np.array(
+                        s.tolist() + [(i, "", 0) for i in range(len(s), max_len)],
+                        dtype=SEQ_ITEM_TYPE,
+                    ),
+                    y,
+                ]
+                for s, y in res
+            ],
+            dtype=object,
+        )
 
     # save_parsed_dataset(res, path, max_items, gen_tuple)
 

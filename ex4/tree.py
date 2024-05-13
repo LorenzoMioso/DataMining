@@ -4,16 +4,18 @@ from multiprocessing import Pool
 from typing import List, Tuple
 
 import numpy as np
+from sklearn.model_selection import train_test_split
+from tqdm import tqdm
 
 sys.path.append("..")
 
 from ex4.util import count_labels, parse_dataset
 
 # DATASET_PATH = "../datasets/activity.txt"  # 35 lines
-DATASET_PATH = "../datasets/question.txt"  # 1730 lines
+# DATASET_PATH = "../datasets/question.txt"  # 1730 lines
 # DATASET_PATH = "../datasets/epitope.txt"  # 2392 lines
 # DATASET_PATH = "../datasets/gene.txt"  # 2942 lines
-# DATASET_PATH = "../datasets/robot.txt" # 4302 lines
+DATASET_PATH = "../datasets/robot.txt"  # 4302 lines
 
 
 class EventNode:
@@ -209,7 +211,8 @@ def Best_tree(W, VT, X, Y, run_parallel=False) -> EventNode:
                 TreePair, [(W, VT, X, Y, l, vt) for l, vt in candidate_pairs]
             )
     else:
-        PSI = [TreePair(W, VT, X, Y, l, vt) for l, vt in candidate_pairs]
+        for l, vt in tqdm(candidate_pairs):
+            PSI.append(TreePair(W, VT, X, Y, l, vt))
 
     return max(
         PSI,
@@ -239,35 +242,34 @@ def print_tree(root, indent=0, prefix=""):
 
 
 def main():
-    df = parse_dataset(DATASET_PATH, max_items=10000, gen_tuple=count_labels)
-    train = df.sample(frac=0.8)
-    test = df.drop(train.index)
+    dataset = parse_dataset(DATASET_PATH, max_items=10000, gen_tuple=count_labels)
+    X = dataset[:, 0]
+    Y = dataset[:, 1]
 
-    W = np.ones(len(train)) / len(train)
-    VT = np.zeros(len(train))
-    X = train["s"].to_numpy()
-    Y = train["y"].to_numpy()
-    l = "5"
-    d = 28
+    X_train, X_test, Y_train, Y_test = train_test_split(X, Y, test_size=0.2)
 
-    tree = TreePair(W, VT, X, Y, l, d)
-    print("Tree pair")
-    print_tree(tree)
+    W = np.ones(len(X_train)) / len(X_train)
+    VT = np.zeros(len(X_train))
+    l = "10"
+    d = 10
 
-    # tree = Best_tree(W, VT, X, Y)
-    # print("Best tree")
+    # tree = TreePair(W, VT, X_train, Y_train, l, d)
+    # print("Tree pair")
     # print_tree(tree)
+
+    tree = Best_tree(W, VT, X_train, Y_train)
+    print("Best tree")
+    print_tree(tree)
 
     # test the tree
     correct = 0
-    for i, row in test.iterrows():
-        x = row["s"]
-        y = row["y"]
+    for i, x in enumerate(X_test):
+        y = Y_test[i]
         p = predict(tree, (0, x))
         # print(f"Predicted {p}, expected {y}")
         if p == y:
             correct += 1
-    print(f"Accuracy: {correct / len(test)}")
+    print(f"Accuracy: {correct / len(X_test)}")
 
 
 if __name__ == "__main__":

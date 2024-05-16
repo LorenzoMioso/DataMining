@@ -13,9 +13,9 @@ from ex4.util import count_labels, parse_dataset
 
 # DATASET_PATH = "../datasets/activity.txt"  # 35 lines
 # DATASET_PATH = "../datasets/question.txt"  # 1730 lines
-# DATASET_PATH = "../datasets/epitope.txt"  # 2392 lines
+DATASET_PATH = "../datasets/epitope.txt"  # 2392 lines
 # DATASET_PATH = "../datasets/gene.txt"  # 2942 lines
-DATASET_PATH = "../datasets/robot.txt"  # 4302 lines
+# DATASET_PATH = "../datasets/robot.txt"  # 4302 lines
 
 
 class EventNode:
@@ -96,10 +96,11 @@ def TreePair(W, VT, X, Y, l, d) -> EventNode:
         else:
             I_f.discard(j)
 
+    def weighted_frequency(y):
+        return np.sum([W[j] for j in I_f if Y[j] == y])
+
     # a leaf node with the class that has the most weighted frequency
-    tree.false_child = Leaf(
-        max([1, -1], key=lambda y: np.sum([W[j] for j in I_f if Y[j] == y]))
-    )
+    tree.false_child = Leaf(max([1, -1], key=weighted_frequency))
 
     # for each true sequence, save the value of the first tuple in the sequence with label l
     P_t = {
@@ -119,18 +120,16 @@ def TreePair(W, VT, X, Y, l, d) -> EventNode:
 
         # could be that splitting by value results in a single class
         # true child is a leaf node with the class that has the most weighted frequency
-        cnode.true_child = Leaf(
-            max(
-                [1, -1],
-                key=lambda y: np.sum(
-                    [
-                        W[j]
-                        for j, v in P_t.items()
-                        if Y[j] == y and values[i - 1] < v <= values[i]
-                    ]
-                ),
+        def weighted_frequency_tc(y):
+            return np.sum(
+                [
+                    W[j]
+                    for j, v in P_t.items()
+                    if Y[j] == y and values[i - 1] < v <= values[i]
+                ]
             )
-        )
+
+        cnode.true_child = Leaf(max([1, -1], key=weighted_frequency_tc))
 
         if i < len(values) - 2:
             cnode.false_child = ValueNode()
@@ -138,22 +137,21 @@ def TreePair(W, VT, X, Y, l, d) -> EventNode:
         else:
 
             # sometimes could be the same as the true child,
-            cnode.false_child = Leaf(
-                max(
-                    [1, -1],
-                    key=lambda y: np.sum(
-                        [
-                            W[j]
-                            for j, v in P_t.items()
-                            if Y[j] == y and values[i] < v <= values[i + 1]
-                        ]
-                    ),
+            def weighted_frequency_fc(y):
+                return np.sum(
+                    [
+                        W[j]
+                        for j, v in P_t.items()
+                        if Y[j] == y and values[i] < v <= values[i + 1]
+                    ]
                 )
-            )
+
+            cnode.false_child = Leaf(max([1, -1], key=weighted_frequency_fc))
 
         i += 1
         if i > len(values) - 1:
             break
+
     return tree
 
 
@@ -191,18 +189,20 @@ def Best_tree(W, VT, X, Y, run_parallel=False) -> EventNode:
     assert (
         len(W) == len(VT) == len(X) == len(Y)
     ), f"Input data must have the same length, lengths are {len(W)}, {len(VT)}, {len(X)}, {len(Y)}"
-    candidate_pairs = []
 
+    candidate_pairs = set()
     for j in range(len(W)):
         s = X[j]
         vt = VT[j]
         for si in s:
-            if (si[1], si[0] - vt) not in candidate_pairs:
-                candidate_pairs.append((si[1], si[0] - vt))
+            candidate_pairs.add((si[1], si[0] - vt))
 
     # sort the candidate pairs by incresing order of the second element.
     # The intention is to reduce the consumption of the sequences
-    candidate_pairs.sort(key=lambda x: x[1])
+    def sort_key(x):
+        return x[1]
+
+    candidate_pairs = sorted(candidate_pairs, key=sort_key)
 
     PSI = []
     if run_parallel:
@@ -214,12 +214,12 @@ def Best_tree(W, VT, X, Y, run_parallel=False) -> EventNode:
         for l, vt in tqdm(candidate_pairs):
             PSI.append(TreePair(W, VT, X, Y, l, vt))
 
-    return max(
-        PSI,
-        key=lambda psi: np.sum(
-            [w * (predict(psi, (VT[i], X[i])) * Y[i]) for i, w in enumerate(W)]
-        ),
-    )
+    def weighted_sum(psi):
+        predictions = np.array([predict(psi, (VT[i], X[i])) for i in range(len(W))])
+        weighted_predictions = W * predictions * Y
+        return np.sum(weighted_predictions)
+
+    return max(PSI, key=weighted_sum)
 
 
 def print_tree(root, indent=0, prefix=""):

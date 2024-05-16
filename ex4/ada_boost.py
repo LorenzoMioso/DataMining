@@ -3,13 +3,14 @@ import sys
 from typing import List
 
 import numpy as np
+from sklearn.model_selection import train_test_split
 
 sys.path.append("..")
 from ex4.tree import SeqTree
-from ex4.util import parse_dataset
+from ex4.util import count_labels, parse_dataset
 
-DATASET_PATH = "../datasets/activity.txt"  # 35 lines
-# DATASET_PATH = "../datasets/question.txt"  # 1730 lines
+# DATASET_PATH = "../datasets/activity.txt"  # 35 lines
+DATASET_PATH = "../datasets/question.txt"  # 1730 lines
 # DATASET_PATH = "../datasets/epitope.txt"  # 2392 lines
 # DATASET_PATH = "../datasets/gene.txt"  # 2942 lines
 # DATASET_PATH = "../datasets/robot.txt"  # 4302 lines
@@ -170,35 +171,33 @@ class BoostedSeqTree:
 
 
 def main():
-    df = parse_dataset(DATASET_PATH)
-    train = df.sample(frac=0.8)
-    test = df.drop(train.index)
+    dataset = parse_dataset(DATASET_PATH, max_items=10000, gen_tuple=count_labels)
+    X = dataset[:, 0]
+    Y = dataset[:, 1]
 
-    X = train["s"].to_numpy()
-    Y = train["y"].to_numpy()
+    X_train, X_test, Y_train, Y_test = train_test_split(X, Y, test_size=0.2)
+
     model = BoostedSeqTree()
-    model.fit(X, Y, ITERATIONS)
+    model.fit(X_train, Y_train, ITERATIONS)
 
     # test the model
-    test_X = test["s"].to_numpy()
-    test_Y = test["y"].to_numpy()
-    predictions = [model.predict(x) for x, y in zip(test_X, test_Y)]
+    predictions = [model.predict(x) for x, y in zip(X_test, Y_test)]
     # for i, p in enumerate(predictions):
     #    print(f"prediction = {p}, real value = {test_Y[i]}")
 
     ## a prediction is correct if the sign of the prediction is the same as the sign of the real value
     accuracy = sum(
-        [1 for i in range(len(test_Y)) if predictions[i] * test_Y[i] > 0]
-    ) / len(test_Y)
+        [1 for i in range(len(Y_test)) if predictions[i] * Y_test[i] > 0]
+    ) / len(Y_test)
 
     print(f"Accuracy = {accuracy}")
 
     # probability of the sample x to be of class 1
-    p_plus = [model.predict_prob(x, 1) for x in test_X]
+    p_plus = [model.predict_prob(x, 1) for x in X_test]
 
     # print(f"p_plus = {p_plus}")
     # probability of the sample x to be of class -1
-    p_minus = [model.predict_prob(x, -1) for x in test_X]
+    p_minus = [model.predict_prob(x, -1) for x in X_test]
     # print(f"p_minus = {p_minus}")
 
 

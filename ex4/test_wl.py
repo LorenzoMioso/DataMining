@@ -2,6 +2,7 @@ import sys
 from multiprocessing import Pool
 
 import numpy as np
+from sklearn.model_selection import train_test_split
 
 sys.path.append("..")
 from ex4.tree import Best_tree, predict
@@ -25,28 +26,25 @@ TRAIN_TEST_CYCLES = 10
 def create_and_test_best_tree(
     dataset_path, parse_dataset_func=count_labels, add_padding=False
 ):
-    df = parse_dataset(
+    dataset = parse_dataset(
         dataset_path, gen_tuple=parse_dataset_func, add_padding=add_padding
     )
-    train = df.sample(frac=0.8)
-    test = df.drop(train.index, inplace=False)
+    X = dataset[:, 0]
+    Y = dataset[:, 1]
 
-    W = np.ones(len(train)) / len(train)
-    VT = np.zeros(len(train))
-    X = train["s"].tolist()
-    Y = train["y"].tolist()
+    X_train, X_test, Y_train, Y_test = train_test_split(X, Y, test_size=0.2)
 
-    tree = Best_tree(W, VT, X, Y)
+    W = np.ones(len(X_train)) / len(X_train)
+    VT = np.zeros(len(X_train))
+    tree = Best_tree(W, VT, X_train, Y_train)
 
     correct = 0
-    for _, row in test.iterrows():
-        x = row["s"]
-        y = row["y"]
+    for x, y in zip(X_test, Y_test):
         p = predict(tree, (0, x))
         if p == y:
             correct += 1
 
-    return correct / len(test)
+    return correct / len(X_test)
 
 
 def is_valid_weak_learner(

@@ -185,41 +185,53 @@ def consume(PSI, x) -> Tuple[int, List[Tuple[int, str, int]]]:
         return (vt, s_x)
 
 
+def calculate_tree_pair(params, W, VT, X, Y):
+    l, vt = params
+    psi = TreePair(W, VT, X, Y, l, vt)
+    return psi, weighted_sum(psi, W, VT, X, Y)
+
+
+def weighted_sum(psi, W, VT, X, Y):
+    predictions = np.array([predict(psi, (VT[i], X[i])) for i in range(len(W))])
+    weighted_predictions = W * predictions * Y
+    return np.sum(weighted_predictions)
+
+
 def Best_tree(W, VT, X, Y, run_parallel=False) -> EventNode:
     assert (
         len(W) == len(VT) == len(X) == len(Y)
     ), f"Input data must have the same length, lengths are {len(W)}, {len(VT)}, {len(X)}, {len(Y)}"
 
+    # Use a set to avoid duplicate pairs
     candidate_pairs = set()
+
     for j in range(len(W)):
         s = X[j]
         vt = VT[j]
         for si in s:
             candidate_pairs.add((si[1], si[0] - vt))
 
-    # sort the candidate pairs by incresing order of the second element.
-    # The intention is to reduce the consumption of the sequences
-    def sort_key(x):
-        return x[1]
+    def secont_element(pair):
+        return pair[1]
 
-    candidate_pairs = sorted(candidate_pairs, key=sort_key)
+    # Convert set to list and sort by the second element of the tuples
+    candidate_pairs = sorted(candidate_pairs, key=secont_element)
 
-    PSI = []
     if run_parallel:
         with Pool(16) as p:
-            PSI = p.starmap(
-                TreePair, [(W, VT, X, Y, l, vt) for l, vt in candidate_pairs]
+            results = p.starmap(
+                calculate_tree_pair, [(pair, W, VT, X, Y) for pair in candidate_pairs]
             )
     else:
-        for l, vt in tqdm(candidate_pairs):
-            PSI.append(TreePair(W, VT, X, Y, l, vt))
+        results = [calculate_tree_pair(pair, W, VT, X, Y) for pair in candidate_pairs]
 
-    def weighted_sum(psi):
-        predictions = np.array([predict(psi, (VT[i], X[i])) for i in range(len(W))])
-        weighted_predictions = W * predictions * Y
-        return np.sum(weighted_predictions)
+    for psi, weighted_sum in results:
+        print(f"Weighted sum: {weighted_sum}")
 
-    return max(PSI, key=weighted_sum)
+    best_psi, best_sum = max(results, key=secont_element)
+    print(f"Best psi: {best_psi}, best sum: {best_sum}")
+
+    return best_psi
 
 
 def print_tree(root, indent=0, prefix=""):
@@ -257,7 +269,7 @@ def main():
     # print("Tree pair")
     # print_tree(tree)
 
-    tree = Best_tree(W, VT, X_train, Y_train)
+    tree = Best_tree(W, VT, X_train, Y_train, run_parallel=True)
     print("Best tree")
     print_tree(tree)
 

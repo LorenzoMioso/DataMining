@@ -225,11 +225,7 @@ def Best_tree(W, VT, X, Y, run_parallel=False) -> EventNode:
     else:
         results = [calculate_tree_pair(pair, W, VT, X, Y) for pair in candidate_pairs]
 
-    for psi, weighted_sum in results:
-        print(f"Weighted sum: {weighted_sum}")
-
-    best_psi, best_sum = max(results, key=secont_element)
-    print(f"Best psi: {best_psi}, best sum: {best_sum}")
+    best_psi, _ = max(results, key=secont_element)
 
     return best_psi
 

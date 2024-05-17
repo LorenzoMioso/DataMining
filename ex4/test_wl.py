@@ -20,7 +20,7 @@ from ex4.util import (
     unique_label_count,
 )
 
-TRAIN_TEST_CYCLES = 10
+TRAIN_TEST_CYCLES = 1000
 
 
 def create_and_test_best_tree(
@@ -35,7 +35,7 @@ def create_and_test_best_tree(
     X_train, X_test, Y_train, Y_test = train_test_split(X, Y, test_size=0.2)
 
     W = np.ones(len(X_train)) / len(X_train)
-    VT = np.zeros(len(X_train))
+    VT = np.zeros(len(X_train), dtype=int)
     tree = Best_tree(W, VT, X_train, Y_train)
 
     correct = 0

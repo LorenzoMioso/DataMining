@@ -4,6 +4,7 @@ import pickle
 import sys
 from collections import Counter
 
+import numpy as np
 import pandas as pd
 
 sys.path.append("..")
@@ -21,11 +22,12 @@ def parse_dataset(
     path,
     max_items=10000,  # per class
     gen_tuple=count_labels,
+    add_padding=False,
 ):
 
-    parsed_df = load_parsed_dataset(path, max_items, gen_tuple)
-    if parsed_df is not None:
-        return parsed_df
+    # parsed_df = load_parsed_dataset(path, max_items, gen_tuple)
+    # if parsed_df is not None:
+    #    return parsed_df
 
     items = []
     classes = []
@@ -70,9 +72,13 @@ def parse_dataset(
                 [{"s": gen_tuple(s), "y": y} for s, y in zip(items, classes)]
             )
 
-    save_parsed_dataset(res, path, max_items, gen_tuple)
+    if add_padding:
+        max_len = max([len(s) for s in items])
+        res["s"] = res["s"].apply(lambda x: x + [(-1, "", 0)] * (max_len - len(x)))
+
+    # save_parsed_dataset(res, path, max_items, gen_tuple)
 
     return res
 
 
-data = parse_dataset("../datasets/skating.txt", gen_tuple=count_labels)
+

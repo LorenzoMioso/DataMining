@@ -125,6 +125,14 @@ class BoostedSeqTree:
         return self
 
     def predict(self, x):
+        # Bad code, needed to use nonconformist library
+        # if s_x is a numpy array, convert it to a list
+        if isinstance(x, np.ndarray):
+            x = x.tolist()
+        # if s_x is a list of tuples of type (int, str, float), convert it to a list of lists
+        if not isinstance(x[0], (int, str, float)):
+            x = [(int(d), l, float(v)) for d, l, v in x]
+
         tmp = 0
         i = 0
         vt = 0
@@ -136,10 +144,20 @@ class BoostedSeqTree:
             i += 1
             if len(x) == 0 or i >= len(self.trees):
                 break
-        return tmp
+
+        if tmp > 0:
+            return 1
+        return -1
 
     def predict_prob(self, x, y):
-        # probability of the sample x to be of class y
+        # Bad code, needed to use nonconformist library
+        # if s_x is a numpy array, convert it to a list
+        if isinstance(x, np.ndarray):
+            x = x.tolist()
+        # if s_x is a list of tuples of type (int, str, float), convert it to a list of lists
+        if not isinstance(x[0], (int, str, float)):
+            x = [(int(d), l, float(v)) for d, l, v in x]
+
         i = 0
         vt = 0
         prob = 0
@@ -192,9 +210,7 @@ def main():
         print(f"prediction = {p}, real value = {test_Y[i]}")
 
     ## a prediction is correct if the sign of the prediction is the same as the sign of the real value
-    accuracy = sum(
-        [1 for i in range(len(test_Y)) if predictions[i] * test_Y[i] > 0]
-    ) / len(test_Y)
+    accuracy = sum([1 for i in range(len(test_Y)) if predictions[i]]) / len(test_Y)
 
     print(f"Accuracy = {accuracy}")
 

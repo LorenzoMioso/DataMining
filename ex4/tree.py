@@ -5,15 +5,16 @@ from typing import List, Tuple
 
 import numpy as np
 
-from ex4.util import count_labels, parse_dataset
-
 sys.path.append("..")
+from ex4.util import count_labels, parse_dataset
 
 # DATASET_PATH = "../datasets/activity.txt"  # 35 lines
 DATASET_PATH = "../datasets/question.txt"  # 1730 lines
 # DATASET_PATH = "../datasets/epitope.txt"  # 2392 lines
 # DATASET_PATH = "../datasets/gene.txt"  # 2942 lines
 # DATASET_PATH = "../datasets/robot.txt" # 4302 lines
+
+THREADS = 16
 
 
 class EventNode:
@@ -160,6 +161,13 @@ def TreePair(W, VT, X, Y, l, d) -> EventNode:
 
 def predict(PSI, x):
     vt, s_x = x
+    # if s_x is a numpy array, convert it to a list
+    if isinstance(s_x, np.ndarray):
+        s_x = s_x.tolist()
+    # if s_x is a list of tuples of type (int, str, float), convert it to a list of lists
+    if not isinstance(s_x[0], (int, str, float)):
+        s_x = [(int(d), l, float(v)) for d, l, v in s_x]
+
     assert len(x) > 0, "Input sequence must have at least one element"
     assert PSI is not None, "PSI must not be None"
     while not isinstance(PSI, Leaf):
@@ -204,14 +212,13 @@ def Best_tree(W, VT, X, Y, run_parallel=False) -> EventNode:
     assert (
         len(W) == len(VT) == len(X) == len(Y)
     ), f"Input data must have the same lenght, lengths are {len(W)}, {len(VT)}, {len(X)}, {len(Y)}"
-    candidate_pairs: List[Tuple[str, int]] = []
     n = len(W)
+    candidate_pairs = set()
     for j in range(n):
         s = X[j]
         vt = VT[j]
         for si in s:
-            if (si[1], si[0] - vt) not in candidate_pairs:
-                candidate_pairs.append((si[1], si[0] - vt))
+            candidate_pairs.add((si[1], si[0] - vt))
 
     # sort the candidate pairs by incresing order of the second element.
     # The intention is to reduce the consumption of the sequences
@@ -220,7 +227,7 @@ def Best_tree(W, VT, X, Y, run_parallel=False) -> EventNode:
     PSI = []
     # run TreePair in parallel
     if run_parallel:
-        with Pool(16) as p:
+        with Pool(THREADS) as p:
             PSI = p.starmap(
                 TreePair, [(W, VT, X, Y, l, vt) for l, vt in candidate_pairs]
             )

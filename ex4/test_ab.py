@@ -38,8 +38,7 @@ def plot_iterations_accuracy(df, iterations):
         ]
         print(f"predictions = {predictions}")
         accuracy.append(
-            sum([1 for i in range(len(test_Y)) if predictions[i] * test_Y[i] > 0])
-            / len(test_Y)
+            sum([1 for i in range(len(test_Y)) if predictions[i] > 0]) / len(test_Y)
         )
         print(f"Accuracy = {accuracy[-1]}")
 

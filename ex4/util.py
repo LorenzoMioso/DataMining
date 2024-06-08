@@ -100,6 +100,7 @@ def parse_dataset(
     path,
     max_items=10000,  # per class
     gen_tuple=count_labels,
+    add_padding=False,
 ):
 
     parsed_df = load_parsed_dataset(path, max_items, gen_tuple)
@@ -148,6 +149,10 @@ def parse_dataset(
             res = pd.DataFrame(
                 [{"s": gen_tuple(s), "y": y} for s, y in zip(items, classes)]
             )
+
+    if add_padding:
+        max_len = max([len(s) for s in items])
+        res["s"] = res["s"].apply(lambda x: x + [(-1, "", 0)] * (max_len - len(x)))
 
     save_parsed_dataset(res, path, max_items, gen_tuple)
 

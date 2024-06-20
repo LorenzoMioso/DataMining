@@ -14,7 +14,7 @@ DATASET_PATH = "../datasets/question.txt"  # 1730 lines
 # DATASET_PATH = "../datasets/gene.txt"  # 2942 lines
 # DATASET_PATH = "../datasets/robot.txt" # 4302 lines
 
-THREADS = 16
+THREADS = 6
 
 
 class EventNode:
@@ -164,7 +164,7 @@ def predict(PSI, x):
     # if s_x is a numpy array, convert it to a list
     if isinstance(s_x, np.ndarray):
         s_x = s_x.tolist()
-    # if s_x is a list of tuples of type (int, str, float), convert it to a list of lists
+    # if s_x is not a list of tuples of type (int, str, float), convert it to a list of lists
     if not isinstance(s_x[0], (int, str, float)):
         s_x = [(int(d), l, float(v)) for d, l, v in s_x]
 
@@ -197,6 +197,13 @@ def consume(PSI, x) -> Tuple[int, List[Tuple[int, str, int]]]:
     # x = (vt, s_x) , vt belongs to R^(>=0), s_x belongs to s_x belongs to (R^+ x L, x R)^*
     assert isinstance(PSI, EventNode)
     vt, s_x = x
+    # if s_x is a numpy array, convert it to a list
+    if isinstance(s_x, np.ndarray):
+        s_x = s_x.tolist()
+    # if s_x is not a list of tuples of type (int, str, float), convert it to a list of lists
+    if not isinstance(s_x[0], (int, str, float)):
+        s_x = [(int(d), l, float(v)) for d, l, v in s_x]
+
     i = None
     for idx, s in enumerate(s_x):
         if vt - s[0] <= PSI.d and s[1] == PSI.l:
@@ -209,6 +216,13 @@ def consume(PSI, x) -> Tuple[int, List[Tuple[int, str, int]]]:
 
 
 def Best_tree(W, VT, X, Y, run_parallel=False) -> EventNode:
+    # if X is a numpy array, convert it to a list
+    if isinstance(X, np.ndarray):
+        X = X.tolist()
+    # if X[0] is not a list of tuples of type (int, str, float), convert it to a list of lists
+    if not isinstance(X[0][0], (int, str, float)):
+        X = [[(int(d), l, float(v)) for d, l, v in s] for s in X]
+
     assert (
         len(W) == len(VT) == len(X) == len(Y)
     ), f"Input data must have the same lenght, lengths are {len(W)}, {len(VT)}, {len(X)}, {len(Y)}"

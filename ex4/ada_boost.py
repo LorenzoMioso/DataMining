@@ -28,7 +28,7 @@ class BoostedSeqTree:
     def __init__(self, trees=[], a=[], e=[]):
         self.trees = trees
         self.a = a
-        self.e
+        self.e = e
 
     def fit(self, X_0: List[Tuple[int, str, float]], Y: List[int], iterations: int):
         t = 0

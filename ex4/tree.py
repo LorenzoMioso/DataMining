@@ -256,6 +256,25 @@ def Best_tree(W, VT, X, Y, run_parallel=False) -> EventNode:
     )
 
 
+def print_tree(root, indent=0, prefix=""):
+    if isinstance(root, EventNode):
+        print("  " * indent + f"EventNode('{root.l}', {root.d})")
+        if root.true_child:
+            print_tree(root.true_child, indent + 1, "T")
+        if root.false_child:
+            print_tree(root.false_child, indent + 1, "F")
+    elif isinstance(root, ValueNode):
+        print("  " * indent + f"-{prefix}: ValueNode({root.v})")
+        if root.true_child:
+            print_tree(root.true_child, indent + 1, "T")
+        if root.false_child:
+            print_tree(root.false_child, indent + 1, "F")
+    elif isinstance(root, Leaf):
+        print("  " * indent + f"-{prefix}: Leaf({root.y})")
+    else:
+        raise ValueError(f"Unknown type {type(root)}")
+
+
 def main():
     df = parse_dataset(DATASET_PATH, max_items=100, gen_tuple=count_labels)
     train = df.sample(frac=0.8)
@@ -286,25 +305,6 @@ def main():
         if p == y:
             correct += 1
     print(f"Accuracy: {correct / len(test)}")
-
-
-def print_tree(root, indent=0, prefix=""):
-    if isinstance(root, EventNode):
-        print("  " * indent + f"EventNode('{root.l}', {root.d})")
-        if root.true_child:
-            print_tree(root.true_child, indent + 1, "T")
-        if root.false_child:
-            print_tree(root.false_child, indent + 1, "F")
-    elif isinstance(root, ValueNode):
-        print("  " * indent + f"-{prefix}: ValueNode({root.v})")
-        if root.true_child:
-            print_tree(root.true_child, indent + 1, "T")
-        if root.false_child:
-            print_tree(root.false_child, indent + 1, "F")
-    elif isinstance(root, Leaf):
-        print("  " * indent + f"-{prefix}: Leaf({root.y})")
-    else:
-        raise ValueError(f"Unknown type {type(root)}")
 
 
 if __name__ == "__main__":
